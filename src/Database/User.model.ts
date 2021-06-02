@@ -1,6 +1,6 @@
 import { DataTypes, Model } from 'https://deno.land/x/denodb/mod.ts';
 import { ModelDefaults, ModelFields } from "https://deno.land/x/denodb@v1.0.23/lib/model.ts";
-import { PrecenseLogModel } from "./PercenseLog.model.ts";
+import { PrecenseLogModel } from "./PrecenseLog.model.ts";
 
 /**
  * User Model

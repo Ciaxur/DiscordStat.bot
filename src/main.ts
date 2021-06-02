@@ -1,9 +1,9 @@
-import { getUser, PresenceUpdatePayload, startBot } from 'https://deno.land/x/discordeno@10.2.0/mod.ts';
+import { PresenceUpdatePayload, startBot } from 'https://deno.land/x/discordeno@10.2.0/mod.ts';
 import { v4 } from 'https://deno.land/std@0.86.0/uuid/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import {
-  PrecenseLogModel, StatusModel, UserModel,
+  PrecenseLogModel, UserModel,
   initConnection,
 } from './Database/index.ts';
 import {
@@ -121,8 +121,10 @@ startBot({
             // Update Username if username is null
             if (precense.user.username && user.username === null) {
               console.log(`Updating user ${user.userID}'s username to '${precense.user.username}'`);
-              user.username = precense.user.username;
-              user.update()
+              UserModel
+                .where('userID', precense.user.id)
+                .update({ username: precense.user.username })
+                .then(() => console.log('Username updated'))
                 .catch(err => console.error('Could not update username: ', err));
             }
             
