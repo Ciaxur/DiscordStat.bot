@@ -1,5 +1,5 @@
-import { DataTypes, Model, Relationships } from 'https://deno.land/x/denodb@v1.0.23/mod.ts';
-import { ModelDefaults, ModelFields } from "https://deno.land/x/denodb@v1.0.23/lib/model.ts";
+import { DataTypes, Model, Relationships } from 'https://deno.land/x/denodb@v1.0.24/mod.ts';
+import { ModelDefaults, ModelFields } from "https://deno.land/x/denodb@v1.0.24/lib/model.ts";
 import { UserModel } from './User.model.ts';
 import { StatusModel } from './Status.model.ts';
 

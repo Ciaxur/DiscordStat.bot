@@ -1,4 +1,4 @@
-import { Database, PostgresConnector } from 'https://deno.land/x/denodb@v1.0.23/mod.ts';
+import { Database, PostgresConnector } from 'https://deno.land/x/denodb@v1.0.24/mod.ts';
 import { PrecenseLogModel, UserModel, StatusModel } from './index.ts';
 import { IEnvironment } from '../Interfaces/index.ts';
 
