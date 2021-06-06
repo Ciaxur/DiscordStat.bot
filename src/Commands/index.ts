@@ -2,7 +2,7 @@ import { SERVER_COMMANDS } from './ServerCommands.ts';
 import { USER_COMMANDS } from './UserCommands.ts';
 import { Command } from '../Interfaces/Command.ts';
 
-const COMMAND_REGEX = /^!(\w+)\s?(\w+)?/;
+const COMMAND_REGEX = /^!([\w-]+)\s?(\w+)?/;
 
 export function parseCommand(str: string): Command | null {
   try {
@@ -13,7 +13,7 @@ export function parseCommand(str: string): Command | null {
       cmd,
       directArg: arg,
       arguments: args,
-      execute: fn || function() {},
+      execute: fn.exec || function() {},
     };
   } catch(e) {
     return null;

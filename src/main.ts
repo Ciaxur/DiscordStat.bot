@@ -69,6 +69,7 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
 }
 
 // Initialize Bot
+let gatewayReady = false;
 startBot({
   token: env.BOT_TOKEN,
   intents: [
@@ -78,9 +79,13 @@ startBot({
   eventHandlers: {
     ready() {
       console.log('Gateway is Ready!');
+      gatewayReady = true;
     },
 
     messageCreate(msg) {
+      // Handle Gateway Readiness
+      if (!gatewayReady) return;
+      
       const { author, content, channel } = msg;
 
       // Handle message only in verified channels
@@ -90,7 +95,10 @@ startBot({
           console.log(`${author.username} issued command: ${content}`);
           const command = parseCommand(content);
           command?.execute(msg)
-            .catch(err => console.log('Message Create Error:', command, err));
+            .catch(err => {
+              console.log('Error:', err);
+              return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
+            });
         }
       }
     },

@@ -1,10 +1,14 @@
 import { Message } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { CommandMap } from '../Interfaces/Command.ts';
-import { IPrecenseLog } from '../Interfaces/Database.ts';
+import { IPrecenseLog, IUser } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel } from '../Database/index.ts';
+import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE } from './Cache.ts';
+import CONFIG from '../config.ts';
+
+
 
 /**
  * Handles Uptime Command. Replies with last most recent
@@ -39,16 +43,102 @@ async function command_uptime(msg: Message): Promise<any> {
 
       return msg.reply(`You've been online for ${dt_str.str}. 
         **Online Timestamp**: ${recentOfflinePrecense.startTime.toUTCString()}`);
-    })
-    .catch(err => {
-      console.log('Error:', err);
-      return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
     });
 }
 
+/**
+ * Handles Weekly Avg. Uptime Command. Replies with the average
+ *  uptime for the week
+ * @param msg Message Object
+ */
+async function command_weekUptime(msg: Message): Promise<any> {
+  return UserModel.find(msg.author.id)
+    .then(async (user) => {
+      if (!user) {
+        return msg.reply('No metrics stored for user');
+      }
+
+      // Check if in Cache Hit or Stale
+      const userObj: IUser = user as any;
+
+      // Stale or Cache Miss
+      if(!UPTIME_CACHE[userObj.userID] && UPTIME_CACHE[userObj.userID].timestamp.getTime() + UPTIME_CACHE_EXPIRE > Date.now()) {
+        // Latest Stored OFFLINE precense
+        const startDate = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)); // Past 7 Days
+        const precenseLogs = (await PrecenseLogModel
+          .where('userID', user.userID as string)
+          .where('startTime', '>=', startDate.toUTCString())
+          .orderBy('created_at', 'asc')
+          .get()) as Model[];
+
+        // Handle no Stored Data found
+        if (!precenseLogs.length) {
+          return msg.reply('No recent found metrics found');
+        }
+
+        // Calculate week uptime
+        const avg_uptime_ms = precenseLogs.reduce((total, entry: any) => (
+          total + (parseInt((entry as IPrecenseLog).statusID as any) !== StatusType.offline
+            ? (((entry as IPrecenseLog).endTime?.getTime() || Date.now()) - (entry as IPrecenseLog).startTime.getTime())
+            : 0
+          )
+        ), 0);
+        const week_dt = utils.getTimeDifferenceString(avg_uptime_ms);
+
+        // Store Cache
+        UPTIME_CACHE[userObj.userID] = {
+          weekUptime: {
+            startDate,
+            endDate: new Date(),
+            week_dt,
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      const cache = UPTIME_CACHE[userObj.userID];
+      return msg.reply(`For the past week, you're uptime has been ${cache.weekUptime.week_dt.str}
+        **Timestamp:** ${cache.weekUptime.startDate.toUTCString()} - ${cache.weekUptime.endDate.toUTCString()}`);
+    });
+}
+
+/**
+ * Prints help menu for user
+ * @param msg Message Object
+ */
+async function command_help(msg: Message): Promise<any> {
+  return msg.send({
+    embed: {
+      title: 'Help Menu',
+      description: Object.entries(USER_COMMANDS)
+        .reduce((acc, [ key, val ]) => ( acc + `**${key}**: ${val.description}\n`), ''),
+    },
+  });
+}
+
+/**
+ * Retrieves project Version, replying to sender
+ * @param msg Message Object
+ */
+async function command_version(msg: Message): Promise<any> {
+  return msg.reply(`Version ${CONFIG.version}`);
+}
+
 export const USER_COMMANDS: CommandMap = {
-  'help': async (msg: Message) => { // TODO:
-    return msg.reply('Helping...');
+  'help': {
+    exec: command_help,
+    description: 'Print the Help Menu',
   },
-  'uptime': command_uptime,
+  'uptime': {
+    exec: command_uptime,
+    description: 'Prints User\'s most recent uptime',
+  },
+  'week-uptime': {
+    exec: command_weekUptime,
+    description: 'Prints User\'s uptime during the past 7 days',
+  },
+  'version': {
+    exec: command_version,
+    description: 'Prints Bot\'s current version',
+  }
 };
