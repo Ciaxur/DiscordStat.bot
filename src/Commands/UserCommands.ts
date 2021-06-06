@@ -5,7 +5,7 @@ import { IPrecenseLog, IUser } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel } from '../Database/index.ts';
-import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE } from './Cache.ts';
+import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE, restrictUptimeCache } from './Cache.ts';
 import CONFIG from '../config.ts';
 
 
@@ -97,6 +97,9 @@ async function command_weekUptime(msg: Message): Promise<any> {
       }
 
       const cache = UPTIME_CACHE[userObj.userID];
+
+      // Clean up Cache
+      restrictUptimeCache(UPTIME_CACHE, 10);
       return msg.reply(`For the past week, you're uptime has been ${cache.weekUptime.week_dt.str}
         **Timestamp:** ${cache.weekUptime.startDate.toUTCString()} - ${cache.weekUptime.endDate.toUTCString()}`);
     });
