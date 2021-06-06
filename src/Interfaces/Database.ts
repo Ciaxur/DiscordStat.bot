@@ -1,8 +1,9 @@
 
 // User Model Interface
 export interface IUser {
-  userID:     string,
-  username?:  string,
+  userID:             string,
+  username?:          string | null,
+  disableTracking:    boolean | null,
 }
 
 // Status Model Interface

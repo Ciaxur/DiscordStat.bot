@@ -94,7 +94,7 @@ startBot({
         if (content.startsWith('!')) {
           console.log(`${author.username} issued command: ${content}`);
           const command = parseCommand(content);
-          command?.execute(msg)
+          command?.execute(msg, command)
             .catch(err => {
               console.log('Error:', err);
               return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
@@ -123,7 +123,8 @@ startBot({
             UserModel.create({
               userID: precense.user.id,
               username: precense.user.username || null,
-            })
+              disableTracking: null,
+            } as Partial<IUser>)
               // Update PrecenseLog
               .then(user => updateUserPrecense(user, precense))
               .catch(err => console.error('User Creation Error:', err));
@@ -143,8 +144,10 @@ startBot({
                 .catch(err => console.error('Could not update username: ', err));
             }
             
-            // Update PrecenseLog if User has an unclosed Precense
-            updateUserPrecense(user, precense);
+            // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
+            if ((user as any as IUser).disableTracking === false) {
+              updateUserPrecense(user, precense);
+            }
           }
 
         })

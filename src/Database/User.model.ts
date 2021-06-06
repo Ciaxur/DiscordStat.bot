@@ -20,6 +20,10 @@ export class UserModel extends Model {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    disableTracking: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    }
   } as ModelFields;
 
   static precenseLogs() {

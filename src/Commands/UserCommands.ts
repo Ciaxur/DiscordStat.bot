@@ -1,6 +1,6 @@
 import { Message } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
-import { CommandMap } from '../Interfaces/Command.ts';
+import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { IPrecenseLog, IUser } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
@@ -15,7 +15,7 @@ import CONFIG from '../config.ts';
  *  uptime metric since LAST OFFLINE END
  * @param msg Message Object
  */
-async function command_uptime(msg: Message): Promise<any> {
+async function command_uptime(msg: Message, cmd: Command): Promise<any> {
   return UserModel.find(msg.author.id)
     .then(async (user) => {
       if (!user) {
@@ -51,7 +51,7 @@ async function command_uptime(msg: Message): Promise<any> {
  *  uptime for the week
  * @param msg Message Object
  */
-async function command_weekUptime(msg: Message): Promise<any> {
+async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
   return UserModel.find(msg.author.id)
     .then(async (user) => {
       if (!user) {
@@ -109,7 +109,7 @@ async function command_weekUptime(msg: Message): Promise<any> {
  * Prints help menu for user
  * @param msg Message Object
  */
-async function command_help(msg: Message): Promise<any> {
+async function command_help(msg: Message, cmd: Command): Promise<any> {
   return msg.send({
     embed: {
       title: 'Help Menu',
@@ -123,14 +123,73 @@ async function command_help(msg: Message): Promise<any> {
  * Retrieves project Version, replying to sender
  * @param msg Message Object
  */
-async function command_version(msg: Message): Promise<any> {
+async function command_version(msg: Message, cmd: Command): Promise<any> {
   return msg.reply(`Version ${CONFIG.version}`);
+}
+
+/**
+ * Prints the status of whether the user's data is
+ *  being actively stored or not and total stored data
+ * @param msg Message Object
+ */
+async function command_tracking_status(msg: Message, cmd: Command): Promise<any> {
+  return UserModel.find(msg.author.id)
+    .then(async (user) => {
+      if (!user) {
+        return msg.reply('No metrics stored for user');
+      }
+
+      // Get all logs relating to user
+      const precenseLogs = (await PrecenseLogModel
+        .where('userID', user.userID as string)
+        .get()) as Model[];
+
+      return msg.reply({
+        embed: {
+          title: 'User Tracking Status',
+          description: `**Tracking Status**: ${(user as any as IUser).disableTracking ? 'Disabled' : 'Enabled'}
+            **Total Logs Stored:** ${precenseLogs.length}`
+        },
+      });
+    });
+}
+
+/**
+ * Sets tracking status given by user
+ * @param msg Message Object
+ */
+async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
+  // Expect direct argument to be [true/false]
+  if (cmd.directArg === undefined || !['true', 'false'].includes(cmd.directArg.toLowerCase())) {
+    return msg.reply(`Invalid command usage: Expecting argument to be passed \`${cmd.cmd} [true/false]\` `);
+  }
+
+  // Update Tracking Setting
+  return UserModel
+    .where('userID', msg.author.id)
+    .update('disableTracking', cmd.directArg.toLowerCase() === 'true' ? false : true)
+    .then(() => {
+      console.log(`User ${msg.author.id} Tracking Updated to ${cmd.directArg}`);
+      return msg.reply(`Tracking updated to: **${cmd.directArg.toLocaleLowerCase()}**`);
+    })
+    .catch(err => {
+      console.log('Tracking Update Error:', err);
+      return err;
+    });
 }
 
 export const USER_COMMANDS: CommandMap = {
   'help': {
     exec: command_help,
     description: 'Print the Help Menu',
+  },
+  'tracking-status': {
+    exec: command_tracking_status,
+    description: 'Prints status of tracking enable/disable for user',
+  },
+  'tracking-set': {
+    exec: command_tracking_set,
+    description: 'Sets tracking state given by user argument. !tracking-set [true/false]',
   },
   'uptime': {
     exec: command_uptime,
