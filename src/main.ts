@@ -10,6 +10,7 @@ import {
   IPrecenseLog, IStatus, IUser, StatusType,
 } from './Interfaces/Database.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
+import { statusEnumFromString } from './Helpers/utils.ts';
 
 // Load in Environment Variables
 console.log('Loading Environment Variables...');
@@ -29,20 +30,7 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
     .get();
 
   // Setup Status ID
-  let status: StatusType = StatusType.online;
-  switch (precense.status) {
-    case 'online':
-      break;
-    case 'offline':
-      status = StatusType.offline;
-      break;
-    case 'dnd':
-      status = StatusType.dnd;
-      break;
-    case 'idle':
-      status = StatusType.idle;
-      break;
-  }
+  const status: StatusType = statusEnumFromString(precense.status);
 
   // Close off Entry
   if (entryResult.length) {
