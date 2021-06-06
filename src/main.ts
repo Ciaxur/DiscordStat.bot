@@ -54,7 +54,7 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
     if (pEntry.endTime === null && pStatusID !== status) {
       PrecenseLogModel
         .where('precenseID', pEntry.precenseID)
-        .update({ endTime: new Date() })
+        .update({ endTime: new Date().toUTCString() })
         .then(() => console.log(`User ${user.userID} precense log updated.`))
         .catch(err => console.error('User Precense\'s Endtime could not be updated.', err));
     } 
@@ -72,7 +72,7 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
     precenseID: uuid,
     userID: user.userID,
     statusID: status,
-    startTime: new Date(),
+    startTime: new Date().toUTCString(),
     endTime: null,
   } as any)
     .then(plog => console.log('Precense Log Created for ', user.userID))
