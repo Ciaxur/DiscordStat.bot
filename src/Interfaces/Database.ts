@@ -18,6 +18,7 @@ export interface IStatus {
 export interface IPrecenseLog {
   precenseID: string,
   userID:     string,
+  statusID:   StatusType,
   startTime:  Date,
   endTime:    Date,
 }

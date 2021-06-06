@@ -36,7 +36,7 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
   if (entryResult.length) {
     // Update ONLY if status type is Different
     const pEntry: IPrecenseLog & Model = (entryResult as any)[0];
-    const pStatusID = parseInt(pEntry.statusID as string);
+    const pStatusID = parseInt(pEntry.statusID as any);
 
     // Status Differs
     if (pEntry.endTime === null && pStatusID !== status) {
