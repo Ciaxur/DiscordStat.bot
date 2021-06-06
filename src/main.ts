@@ -10,6 +10,7 @@ import {
   IPrecenseLog, IStatus, IUser, StatusType,
 } from './Interfaces/Database.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
+import { parseCommand } from './Commands/index.ts';
 import { statusEnumFromString } from './Helpers/utils.ts';
 
 // Load in Environment Variables
@@ -70,10 +71,28 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
 // Initialize Bot
 startBot({
   token: env.BOT_TOKEN,
-  intents: ['GUILDS', 'GUILD_PRESENCES'],
+  intents: [
+    'GUILDS', 'GUILD_PRESENCES', 
+    'DIRECT_MESSAGES', 'GUILD_MESSAGES',
+  ],
   eventHandlers: {
     ready() {
       console.log('Gateway is Ready!');
+    },
+
+    messageCreate(msg) {
+      const { author, content, channel } = msg;
+
+      // Handle message only in verified channels
+      if (channel?.name === 'bot-commands') {
+        // Extract/Confirm Valid Command
+        if (content.startsWith('!')) {
+          console.log(`${author.username} issued command: ${content}`);
+          const command = parseCommand(content);
+          command?.execute(msg)
+            .catch(err => console.log('Message Create Error:', command, err));
+        }
+      }
     },
 
     guildLoaded(guild) {
