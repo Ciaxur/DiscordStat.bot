@@ -9,7 +9,7 @@ import {
 import {
   IPrecenseLog, IStatus, IUser, StatusType,
 } from './Interfaces/Database.ts';
-import { Model } from "https://deno.land/x/denodb@v1.0.24/lib/model.ts";
+import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 
 // Load in Environment Variables
 console.log('Loading Environment Variables...');
