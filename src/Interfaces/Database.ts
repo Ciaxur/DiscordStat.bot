@@ -1,4 +1,9 @@
 
+export interface ITimestamps {
+  createdAt: Date,
+  updatedAt: Date,
+}
+
 // User Model Interface
 export interface IUser {
   userID:             string,
@@ -22,4 +27,15 @@ export interface IPrecenseLog {
   statusID:   StatusType,
   startTime:  Date,
   endTime:    Date,
+}
+
+export interface IGuild {
+  guildID:    string,
+  guildName:  string,
+}
+
+export interface IGuildActivity {
+  guildActivityID:  string,
+  guildID:          string,
+  command:          string,
 }

@@ -1,6 +1,10 @@
 import { Database, PostgresConnector } from 'https://deno.land/x/denodb@v1.0.24/mod.ts';
-import { PrecenseLogModel, UserModel, StatusModel } from './index.ts';
 import { IEnvironment } from '../Interfaces/index.ts';
+import { 
+  PrecenseLogModel,
+  UserModel, StatusModel,
+  GuildModel, GuildActivityModel,
+} from './index.ts';
 
 interface IConnectionOptions {
   sync?:  boolean,
@@ -33,7 +37,7 @@ export async function initConnection(env: IEnvironment, options = defaultOptions
   });
   
   // Link Models to DB
-  db.link([UserModel, StatusModel, PrecenseLogModel]);
+  db.link([UserModel, StatusModel, PrecenseLogModel, GuildModel, GuildActivityModel]);
 
   // Sync with the Database
   if (options.sync) {
