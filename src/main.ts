@@ -175,7 +175,7 @@ startBot({
             }
             
             // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
-            if ((user as any as IUser).disableTracking === false) {
+            if ((user as any as IUser).disableTracking !== true) {
               updateUserPrecense(user, precense);
             }
           }
