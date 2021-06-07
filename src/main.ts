@@ -4,10 +4,11 @@ import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import {
   PrecenseLogModel, UserModel,
+  GuildModel, GuildActivityModel,
   initConnection,
 } from './Database/index.ts';
 import {
-  IPrecenseLog, IStatus, IUser, StatusType,
+  IPrecenseLog, IUser, StatusType,
 } from './Interfaces/Database.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { parseCommand } from './Commands/index.ts';
@@ -95,6 +96,19 @@ startBot({
           console.log(`${author.username} issued command: ${content}`);
           const command = parseCommand(content);
           command?.execute(msg, command)
+            .then(() => {   // Store Executed Command from Server
+              const uuid = v4.generate().split('-').pop();
+              const combined_cmd = command.cmd + (command.arguments.length
+                ? ' ' + command.arguments.join(' ') : '');
+                
+              GuildActivityModel.create({
+                guildActivityID: uuid as string,
+                guildID: msg.guildID,
+                command: combined_cmd,
+              })
+                .then(() => console.log(`Guild Activity Added to ${msg.guildID}: ${combined_cmd} -> ${uuid}`))
+                .catch(err => console.log('Guild Activity Error:', err));
+            })
             .catch(err => {
               console.log('Error:', err);
               return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
@@ -104,7 +118,23 @@ startBot({
     },
 
     guildLoaded(guild) {
-      console.log('Guild Loaded, ', guild.name);
+      console.log('Guild Loaded,', guild.name);
+
+      // Keep track of Connected Guilds
+      GuildModel
+        .find(guild.id)
+        .then(entry => {
+          if (!entry) {
+            // Store Guild Entry
+            GuildModel.create({
+              guildID: guild.id,
+              guildName: guild.name,
+            })
+              .then(() => console.log(`Guild Added: ${guild.name}`))
+              .catch(err => console.log('Guild Model Create Error: ', err));
+          }
+        })
+        .catch(err => console.log('Guild Loaded Fetch Error:', err));
     },
 
     presenceUpdate(precense) {
