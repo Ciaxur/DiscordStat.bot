@@ -113,11 +113,17 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
  * @param cmd Parsed Command Object
  */
 async function command_help(msg: Message, cmd: Command): Promise<any> {
+  let initialMessage = `**Announcements**
+    Follow Development at: https://github.com/Ciaxur/DiscordStat.bot
+
+    **User-Specific Commands**
+  `;
+  
   return msg.send({
     embed: {
       title: 'Help Menu',
       description: Object.entries(USER_COMMANDS)
-        .reduce((acc, [ key, val ]) => ( acc + `**${key}**: ${val.description}\n`), ''),
+        .reduce((acc, [ key, val ]) => ( acc + `- **${key}**: ${val.description}\n`), initialMessage),
     },
   });
 }
