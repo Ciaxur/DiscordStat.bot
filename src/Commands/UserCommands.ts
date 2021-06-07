@@ -14,6 +14,7 @@ import CONFIG from '../config.ts';
  * Handles Uptime Command. Replies with last most recent
  *  uptime metric since LAST OFFLINE END
  * @param msg Message Object
+ * @param cmd Parsed Command Object
  */
 async function command_uptime(msg: Message, cmd: Command): Promise<any> {
   return UserModel.find(msg.author.id)
@@ -50,6 +51,7 @@ async function command_uptime(msg: Message, cmd: Command): Promise<any> {
  * Handles Weekly Avg. Uptime Command. Replies with the average
  *  uptime for the week
  * @param msg Message Object
+ * @param cmd Parsed Command Object
  */
 async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
   return UserModel.find(msg.author.id)
@@ -108,6 +110,7 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
 /**
  * Prints help menu for user
  * @param msg Message Object
+ * @param cmd Parsed Command Object
  */
 async function command_help(msg: Message, cmd: Command): Promise<any> {
   return msg.send({
@@ -122,6 +125,7 @@ async function command_help(msg: Message, cmd: Command): Promise<any> {
 /**
  * Retrieves project Version, replying to sender
  * @param msg Message Object
+ * @param cmd Parsed Command Object
  */
 async function command_version(msg: Message, cmd: Command): Promise<any> {
   return msg.reply(`Version ${CONFIG.version}`);
@@ -131,6 +135,7 @@ async function command_version(msg: Message, cmd: Command): Promise<any> {
  * Prints the status of whether the user's data is
  *  being actively stored or not and total stored data
  * @param msg Message Object
+ * @param cmd Parsed Command Object
  */
 async function command_tracking_status(msg: Message, cmd: Command): Promise<any> {
   return UserModel.find(msg.author.id)
@@ -157,6 +162,7 @@ async function command_tracking_status(msg: Message, cmd: Command): Promise<any>
 /**
  * Sets tracking status given by user
  * @param msg Message Object
+ * @param cmd Parsed Command Object
  */
 async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
   // Expect direct argument to be [true/false]
@@ -178,6 +184,18 @@ async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
     });
 }
 
+/**
+ * Removes stored logs for user
+ * @param msg Message Object
+ * @param cmd Parsed Command Object
+ */
+async function command_clear_data(msg: Message, cmd: Command): Promise<any> {
+  return PrecenseLogModel
+    .where('userID', msg.author.id)
+    .delete()
+    .then(() => msg.reply('All logged data have been removed 😺'));
+}
+
 export const USER_COMMANDS: CommandMap = {
   'help': {
     exec: command_help,
@@ -190,6 +208,10 @@ export const USER_COMMANDS: CommandMap = {
   'tracking-set': {
     exec: command_tracking_set,
     description: 'Sets tracking state given by user argument. !tracking-set [true/false]',
+  },
+  'clear-data': {
+    exec: command_clear_data,
+    description: 'Clears all stored logs of user',
   },
   'uptime': {
     exec: command_uptime,

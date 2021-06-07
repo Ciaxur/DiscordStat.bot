@@ -18,7 +18,7 @@ console.log('Loading Environment Variables...');
 const env: IEnvironment = config() as any;
 
 // Database Connetion Init
-console.log(`Initializing DB Connetion to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
+console.log(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 const db = await initConnection(env, { debug: false });
 console.log('Database Connected!');
 
