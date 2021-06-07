@@ -39,7 +39,18 @@ export async function initConnection(env: IEnvironment, options = defaultOptions
   if (options.sync) {
     try {
       await db.sync({ drop: options.drop })
-        .then(() => console.log('DB Synced!'))
+        .then(() => {
+          console.log('DB Synced!');
+          StatusModel.create([
+            { statusID: 0, status: 'online' },
+            { statusID: 1, status: 'offline' },
+            { statusID: 2, status: 'dnd' },
+            { statusID: 3, status: 'idle' },
+          ])
+            .then(() => console.log('Status Items Created'))
+            .catch(err => console.log('Failed to created Status Entries:', err));
+          
+        })
         .catch(err => console.log('Sync Error:', err));
     } catch(e) {
       return Promise.reject(e);
