@@ -65,7 +65,7 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
       const userObj: IUser = user as any;
 
       // Stale or Cache Miss
-      if(!UPTIME_CACHE[userObj.userID] && UPTIME_CACHE[userObj.userID].timestamp.getTime() + UPTIME_CACHE_EXPIRE > Date.now()) {
+      if( UPTIME_CACHE[userObj.userID] === undefined || UPTIME_CACHE[userObj.userID].timestamp.getTime() + UPTIME_CACHE_EXPIRE < Date.now() ) {
         // Latest Stored OFFLINE precense
         const startDate = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)); // Past 7 Days
         const precenseLogs = (await PrecenseLogModel
