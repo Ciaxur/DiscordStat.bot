@@ -10,6 +10,9 @@ Discord Statistics Bot that monitors user statistics on a server, with the end g
 <p align='center'>
   <a href='https://discord.gg/68xT2UwJ2R'>Official Discord Server</a>
 </P>
+<p align='center'>
+  <a href='https://top.gg/bot/804912951144087632'>Official Top.gg Link</a>
+</P>
 
 
 ## Configuration ⚙️
