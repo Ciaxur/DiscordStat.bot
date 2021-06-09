@@ -49,7 +49,11 @@ All commands should be prefixed with `!`.
 - `clear-data`: Clears all stored logs of user. (*No Confirmation is given*)
 - `uptime`: Prints User's most recent uptime
 - `week-uptime`: Prints User's uptime during the past 7 days
+- `donate`: Prints Bot instructions for donating
 - `version`: Prints Bot's current version
+
+**Server-Specific Commands**
+- `server-interaction`: Prints the current server's user interaction with this bot
 
 ## License 📔
 Licensed under the [MIT](LICENSE) License.
