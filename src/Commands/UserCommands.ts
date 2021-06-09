@@ -6,6 +6,7 @@ import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel } from '../Database/index.ts';
 import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE, restrictUptimeCache } from './Cache.ts';
+import { SERVER_COMMANDS } from './ServerCommands.ts';
 import CONFIG from '../config.ts';
 
 
@@ -122,8 +123,15 @@ async function command_help(msg: Message, cmd: Command): Promise<any> {
   return msg.send({
     embed: {
       title: 'Help Menu',
-      description: Object.entries(USER_COMMANDS)
-        .reduce((acc, [ key, val ]) => ( acc + `- **${key}**: ${val.description}\n`), initialMessage),
+      description: (
+        // User Commands
+        Object.entries(USER_COMMANDS)
+          .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), initialMessage) +
+
+        // Server Commands
+        Object.entries(SERVER_COMMANDS)
+          .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), '\n**Server-Specific Commands**\n')
+      ),
     },
   });
 }
