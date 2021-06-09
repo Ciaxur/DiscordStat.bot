@@ -5,6 +5,7 @@ import { IGuildActivity, IGuild } from '../Interfaces/Database.ts';
 
 
 /**
+ * Prints Command Interaction of users within the server
  * @param msg Message Object
  * @param cmd Parsed Command Object
  */

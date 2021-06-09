@@ -210,6 +210,24 @@ async function command_clear_data(msg: Message, cmd: Command): Promise<any> {
     .then(() => msg.reply('All logged data have been removed 😺'));
 }
 
+/**
+ * Prints information for how to donate to this Bot
+ * @param msg Message Object
+ * @param cmd Parsed Command Object
+ */
+async function command_donate(msg: Message, cmd: Command): Promise<any> {
+  msg.send({
+    embed: {
+      title: 'Bot Donation ❤️',
+      image: {
+        url: 'https://ethereum.org/static/a110735dade3f354a46fc2446cd52476/0ee04/eth-home-icon.png',
+      },
+      description: `Donating helps support the development of this bot in the form of future decentralized currency :).
+        - **Ethereum**: 0x1281AD6ce28FD668cf42Ea369ba19413515bD025`
+    },
+  })
+}
+
 export const USER_COMMANDS: CommandMap = {
   'help': {
     exec: command_help,
@@ -234,6 +252,10 @@ export const USER_COMMANDS: CommandMap = {
   'week-uptime': {
     exec: command_weekUptime,
     description: 'Prints User\'s uptime during the past 7 days',
+  },
+  'donate': {
+    exec: command_donate,
+    description: 'Prints Bot instructions for donating',
   },
   'version': {
     exec: command_version,
