@@ -16,6 +16,8 @@ Discord Statistics Bot that monitors user statistics on a server, with the end g
 
 
 ## Configuration ⚙️
+DiscordStat.bot listens on `bot-commands` channel only.
+
 - `BOT_TOKEN`: Discord Bot token
 - `PSQL_USER`: PSQL Database Connection Username
 - `PSQL_PSWD`: PSQL Database Connection Password
