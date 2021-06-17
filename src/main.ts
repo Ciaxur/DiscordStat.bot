@@ -14,14 +14,18 @@ import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { parseCommand } from './Commands/index.ts';
 import { statusEnumFromString } from './Helpers/utils.ts';
 
+// Logging System
+import Logger from './Logging/index.ts';
+const Log = Logger.getInstance();
+
 // Load in Environment Variables
-console.log('Loading Environment Variables...');
+Log.Print('Loading Environment Variables...');
 const env: IEnvironment = config() as any;
 
 // Database Connetion Init
-console.log(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
+Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 const db = await initConnection(env, { debug: false });
-console.log('Database Connected!');
+Log.Info('Database Connected!');
 
 async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) {
   // Check if there is a pending Status
@@ -45,13 +49,13 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
       PrecenseLogModel
         .where('precenseID', pEntry.precenseID)
         .update({ endTime: new Date().toUTCString() })
-        .then(() => console.log(`User ${user.userID} precense log updated.`))
-        .catch(err => console.error('User Precense\'s Endtime could not be updated.', err));
+        .then(() => Log.Info(`User ${user.userID} precense log updated.`))
+        .catch(err => Log.Error('User Precense\'s Endtime could not be updated.', err));
     } 
     
     // Same as Entry, no new precense to log
     else if (pEntry.endTime === null && pStatusID === status) {
-      console.log('No new precense to log. Same as before.');
+      Log.Print('No new precense to log. Same as before.');
       return;
     }
   }
@@ -65,8 +69,8 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
     startTime: new Date().toUTCString(),
     endTime: null,
   } as any)
-    .then(plog => console.log('Precense Log Created for ', user.userID))
-    .catch(err => console.error('Precense Log could not be created: ', err));
+    .then(plog => Log.Info('Precense Log Created for ', user.userID))
+    .catch(err => Log.Error('Precense Log could not be created: ', err));
 }
 
 // Initialize Bot
@@ -79,7 +83,7 @@ startBot({
   ],
   eventHandlers: {
     ready() {
-      console.log('Gateway is Ready!');
+      Log.Info('Gateway is Ready!');
       gatewayReady = true;
     },
 
@@ -93,8 +97,9 @@ startBot({
       if (channel?.name === 'bot-commands') {
         // Extract/Confirm Valid Command
         if (content.startsWith('!')) {
-          console.log(`${author.username} issued command: ${content}`);
-          const command = parseCommand(content);
+          Log.Info(`${author.username} issued command: ${content}`);
+          // const command = parseCommand(content);
+          const command = parseCommand('!' + content.split('!test-')[1]);    // TODO: Remove me, testing only
           command?.execute(msg, command)
             .then(() => {   // Store Executed Command from Server
               const uuid = v4.generate().split('-').pop();
@@ -106,11 +111,11 @@ startBot({
                 guildID: msg.guildID,
                 command: combined_cmd,
               })
-                .then(() => console.log(`Guild Activity Added to ${msg.guildID}: ${combined_cmd} -> ${uuid}`))
-                .catch(err => console.log('Guild Activity Error:', err));
+                .then(() => Log.Info(`Guild Activity Added to ${msg.guildID}: ${combined_cmd} -> ${uuid}`))
+                .catch(err => Log.Error('Guild Activity Error:', err));
             })
             .catch(err => {
-              console.log('Error:', err);
+              Log.Error('Error:', err);
               return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
             });
         }
@@ -118,7 +123,7 @@ startBot({
     },
 
     guildLoaded(guild) {
-      console.log('Guild Loaded,', guild.name);
+      Log.Info('Guild Loaded,', guild.name);
 
       // Keep track of Connected Guilds
       GuildModel
@@ -130,16 +135,16 @@ startBot({
               guildID: guild.id,
               guildName: guild.name,
             })
-              .then(() => console.log(`Guild Added: ${guild.name}`))
-              .catch(err => console.log('Guild Model Create Error: ', err));
+              .then(() => Log.Info(`Guild Added: ${guild.name}`))
+              .catch(err => Log.Error('Guild Model Create Error: ', err));
           }
         })
-        .catch(err => console.log('Guild Loaded Fetch Error:', err));
+        .catch(err => Log.Error('Guild Loaded Fetch Error:', err));
     },
 
     presenceUpdate(precense) {
       // DEBUG: Logs
-      console.log(`User ${precense.user.id} changed to: ${precense.status}`);
+      Log.Debug(`User ${precense.user.id} changed to: ${precense.status}`);
       
       // Create User if User does not Exist
       UserModel.find(precense.user.id)
@@ -147,7 +152,7 @@ startBot({
 
           // New User
           if (user === undefined) {
-            console.log(`Adding ${precense.user.id}...`);
+            Log.Info(`Adding ${precense.user.id}...`);
 
             // Add New Precense
             UserModel.create({
@@ -157,21 +162,21 @@ startBot({
             } as Partial<IUser>)
               // Update PrecenseLog
               .then(user => updateUserPrecense(user, precense))
-              .catch(err => console.error('User Creation Error:', err));
+              .catch(err => Log.Error('User Creation Error:', err));
           }
 
           // User in DB
           else {
-            console.log('User Found: ', user.userID);
+            Log.Info('User Found: ', user.userID);
 
             // Update Username if username is null
             if (precense.user.username && user.username === null) {
-              console.log(`Updating user ${user.userID}'s username to '${precense.user.username}'`);
+              Log.Info(`Updating user ${user.userID}'s username to '${precense.user.username}'`);
               UserModel
                 .where('userID', precense.user.id)
                 .update({ username: precense.user.username })
-                .then(() => console.log('Username updated'))
-                .catch(err => console.error('Could not update username: ', err));
+                .then(() => Log.Info('Username updated'))
+                .catch(err => Log.Error('Could not update username: ', err));
             }
             
             // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
@@ -182,7 +187,7 @@ startBot({
 
         })
         .catch(err => {
-          console.error('PresenceUpdate: Find User Error:', err);
+          Log.Error('PresenceUpdate: Find User Error:', err);
         });
         
     }
@@ -192,8 +197,8 @@ startBot({
 // Interrupt Handling: Clean up!
 ((Deno as any).signal((Deno as any).Signal.SIGINT) as Promise<any>)
   .then(() => {
-    console.log('Cleaning Up...');
-    console.log('Closing Database...');
+    Log.Print('Cleaning Up...');
+    Log.Print('Closing Database...');
     db.close();
     Deno.exit(0);
   });

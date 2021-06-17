@@ -1,4 +1,6 @@
 import { ITimeDifference } from '../Helpers/utils.ts';
+import Logger from '../Logging/index.ts';
+const Log = Logger.getInstance();
 
 // SIMPLE UPTIME CACHE
 interface IUptimeCache {
@@ -38,11 +40,11 @@ export async function restrictUptimeCache(cache: IUptimeCache, entriesLimit: num
       expiredKeys.push(key);
   }
   
-  console.log(`Cleared Cache entry '${oldestEntry[0]}'. Limited to ${entriesLimit}`);
+  Log.Internal('restrictUptimeCache', `Cleared Cache entry '${oldestEntry[0]}'. Limited to ${entriesLimit}`);
   delete cache[oldestEntry[0]];
 
   for (const key of expiredKeys) {
-    console.log(`Cleared Expired Cache entry '${key}'`);
+    Log.Internal('restrictUptimeCache', `Cleared Expired Cache entry '${key}'`);
     delete cache[key];
   }
 }

@@ -5,6 +5,8 @@ import {
   UserModel, StatusModel,
   GuildModel, GuildActivityModel,
 } from './index.ts';
+import Logger from '../Logging/index.ts';
+const Log = Logger.getInstance();
 
 interface IConnectionOptions {
   sync?:  boolean,
@@ -44,18 +46,18 @@ export async function initConnection(env: IEnvironment, options = defaultOptions
     try {
       await db.sync({ drop: options.drop })
         .then(() => {
-          console.log('DB Synced!');
+          Log.Internal('initConnection', 'DB Synced!');
           StatusModel.create([
             { statusID: 0, status: 'online' },
             { statusID: 1, status: 'offline' },
             { statusID: 2, status: 'dnd' },
             { statusID: 3, status: 'idle' },
           ])
-            .then(() => console.log('Status Items Created'))
-            .catch(err => console.log('Failed to created Status Entries:', err));
+            .then(() => Log.Internal('initConnection', 'Status Items Created'))
+            .catch(err => Log.Error('Init Connection, Failed to created Status Entries:', err));
           
         })
-        .catch(err => console.log('Sync Error:', err));
+        .catch(err => Log.Error('Sync Error:', err));
     } catch(e) {
       return Promise.reject(e);
     }

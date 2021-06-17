@@ -7,6 +7,8 @@ import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel } from '../Database/index.ts';
 import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE, restrictUptimeCache } from './Cache.ts';
 import CONFIG from '../config.ts';
+import Logger from '../Logging/index.ts';
+const Log = Logger.getInstance();
 
 
 
@@ -181,11 +183,11 @@ async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
     .where('userID', msg.author.id)
     .update('disableTracking', cmd.directArg.toLowerCase() === 'true' ? false : true)
     .then(() => {
-      console.log(`User ${msg.author.id} Tracking Updated to ${cmd.directArg}`);
+      Log.Internal('command_tracking_set', `User ${msg.author.id} Tracking Updated to ${cmd.directArg}`);
       return msg.reply(`Tracking updated to: **${cmd.directArg.toLocaleLowerCase()}**`);
     })
     .catch(err => {
-      console.log('Tracking Update Error:', err);
+      Log.Error('Tracking Update Error:', err);
       return err;
     });
 }
