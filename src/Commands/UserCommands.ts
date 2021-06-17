@@ -6,6 +6,7 @@ import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel } from '../Database/index.ts';
 import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE, restrictUptimeCache } from './Cache.ts';
+import { SERVER_COMMANDS } from './ServerCommands.ts';
 import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
@@ -66,7 +67,7 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
       const userObj: IUser = user as any;
 
       // Stale or Cache Miss
-      if(!UPTIME_CACHE[userObj.userID] && UPTIME_CACHE[userObj.userID].timestamp.getTime() + UPTIME_CACHE_EXPIRE > Date.now()) {
+      if( UPTIME_CACHE[userObj.userID] === undefined || UPTIME_CACHE[userObj.userID].timestamp.getTime() + UPTIME_CACHE_EXPIRE < Date.now() ) {
         // Latest Stored OFFLINE precense
         const startDate = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)); // Past 7 Days
         const precenseLogs = (await PrecenseLogModel
@@ -124,8 +125,15 @@ async function command_help(msg: Message, cmd: Command): Promise<any> {
   return msg.send({
     embed: {
       title: 'Help Menu',
-      description: Object.entries(USER_COMMANDS)
-        .reduce((acc, [ key, val ]) => ( acc + `- **${key}**: ${val.description}\n`), initialMessage),
+      description: (
+        // User Commands
+        Object.entries(USER_COMMANDS)
+          .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), initialMessage) +
+
+        // Server Commands
+        Object.entries(SERVER_COMMANDS)
+          .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), '\n**Server-Specific Commands**\n')
+      ),
     },
   });
 }
@@ -204,6 +212,24 @@ async function command_clear_data(msg: Message, cmd: Command): Promise<any> {
     .then(() => msg.reply('All logged data have been removed 😺'));
 }
 
+/**
+ * Prints information for how to donate to this Bot
+ * @param msg Message Object
+ * @param cmd Parsed Command Object
+ */
+async function command_donate(msg: Message, cmd: Command): Promise<any> {
+  msg.send({
+    embed: {
+      title: 'Bot Donation ❤️',
+      image: {
+        url: 'https://ethereum.org/static/a110735dade3f354a46fc2446cd52476/0ee04/eth-home-icon.png',
+      },
+      description: `Donating helps support the development of this bot in the form of future decentralized currency :).
+        - **Ethereum**: 0x1281AD6ce28FD668cf42Ea369ba19413515bD025`
+    },
+  })
+}
+
 export const USER_COMMANDS: CommandMap = {
   'help': {
     exec: command_help,
@@ -228,6 +254,10 @@ export const USER_COMMANDS: CommandMap = {
   'week-uptime': {
     exec: command_weekUptime,
     description: 'Prints User\'s uptime during the past 7 days',
+  },
+  'donate': {
+    exec: command_donate,
+    description: 'Prints Bot instructions for donating',
   },
   'version': {
     exec: command_version,
