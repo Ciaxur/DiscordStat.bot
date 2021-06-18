@@ -18,8 +18,6 @@ async function command_server_interaction(msg: Message, cmd: Command): Promise<a
     return Promise.reject('Server Interaction - Guild not found');
   }
 
-  // TODO: Cache previous sum based on Date
-  //  - Having a last updated be the point of which to query
   const guildActivity: IGuildActivity[] = (await GuildActivityModel
     .where('guildID', guildEntry.guildID)
     .get()

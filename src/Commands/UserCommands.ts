@@ -5,12 +5,22 @@ import { IPrecenseLog, IUser } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel } from '../Database/index.ts';
-import { UPTIME_CACHE, UPTIME_CACHE_EXPIRE, restrictUptimeCache } from './Cache.ts';
+import { ITimeDifference } from '../Helpers/utils.ts';
+import { Cache } from '../Helpers/Cache.ts';
 import { SERVER_COMMANDS } from './ServerCommands.ts';
 import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
-const Log = Logger.getInstance();
 
+// CACHE & LOGING
+const Log = Logger.getInstance();
+const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
+export const UPTIME_CACHE_TTL = 1 * 60 * 1000;   // 1 Minute
+
+interface IWeeklyUptime {
+  startDate: Date,
+  endDate: Date,
+  week_dt: ITimeDifference,
+}
 
 
 /**
@@ -66,8 +76,11 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
       // Check if in Cache Hit or Stale
       const userObj: IUser = user as any;
 
+      // GET CACHED ENTRY
+      let cached_entry = UPTIME_CACHE.get(userObj.userID);
+      
       // Stale or Cache Miss
-      if( UPTIME_CACHE[userObj.userID] === undefined || UPTIME_CACHE[userObj.userID].timestamp.getTime() + UPTIME_CACHE_EXPIRE < Date.now() ) {
+      if (!cached_entry) {
         // Latest Stored OFFLINE precense
         const startDate = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)); // Past 7 Days
         const precenseLogs = (await PrecenseLogModel
@@ -91,22 +104,17 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
         const week_dt = utils.getTimeDifferenceString(avg_uptime_ms);
 
         // Store Cache
-        UPTIME_CACHE[userObj.userID] = {
-          weekUptime: {
-            startDate,
-            endDate: new Date(),
-            week_dt,
-          },
-          timestamp: new Date(),
+        cached_entry = {
+          startDate,
+          endDate: new Date(),
+          week_dt,
         };
+        UPTIME_CACHE.set(userObj.userID, cached_entry, UPTIME_CACHE_TTL);
       }
 
-      const cache = UPTIME_CACHE[userObj.userID];
-
       // Clean up Cache
-      restrictUptimeCache(UPTIME_CACHE, 10);
-      return msg.reply(`For the past week, you're uptime has been ${cache.weekUptime.week_dt.str}
-        **Timestamp:** ${cache.weekUptime.startDate.toUTCString()} - ${cache.weekUptime.endDate.toUTCString()}`);
+      return msg.reply(`For the past week, you're uptime has been ${cached_entry.week_dt.str}
+        **Timestamp:** ${cached_entry.startDate.toUTCString()} - ${cached_entry.endDate.toUTCString()}`);
     });
 }
 
