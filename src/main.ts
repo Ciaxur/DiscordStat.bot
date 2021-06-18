@@ -98,8 +98,7 @@ startBot({
         // Extract/Confirm Valid Command
         if (content.startsWith('!')) {
           Log.Info(`${author.username} issued command: ${content}`);
-          // const command = parseCommand(content);
-          const command = parseCommand('!' + content.split('!test-')[1]);    // TODO: Remove me, testing only
+          const command = parseCommand(content);
           command?.execute(msg, command)
             .then(() => {   // Store Executed Command from Server
               const uuid = v4.generate().split('-').pop();
