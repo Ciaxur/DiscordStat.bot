@@ -59,6 +59,7 @@ All commands should be prefixed with `!`.
 
 **Server-Specific Commands**
 - `server-interaction`: Prints the current server's user interaction with this bot
+- `info`: Prints bot information
 
 ## License 📔
 Licensed under the [MIT](LICENSE) License.
