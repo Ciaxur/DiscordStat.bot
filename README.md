@@ -4,6 +4,9 @@
 <h1 align='center'>
   DiscordStat.bot
 </h2>
+
+![oracle-status](https://top-gg-badges.herokuapp.com/badge/804912951144087632)
+
 <p align='center'>
 Discord Statistics Bot that monitors user statistics on a server, with the end goal of a personalized User and Server Statistics Experience much like Spotify's Wrapped.
 </p>
@@ -12,7 +15,7 @@ Discord Statistics Bot that monitors user statistics on a server, with the end g
 </P>
 <p align='center'>
   <a href='https://top.gg/bot/804912951144087632'>Official Top.gg Link</a>
-</P>
+</p>
 
 
 ## Configuration ⚙️
