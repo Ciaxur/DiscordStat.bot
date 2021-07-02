@@ -14,6 +14,7 @@ export function parseCommand(str: string): Command | null {
       directArg: arg,
       arguments: args,
       execute: fn.exec || function() {},
+      userId: '',
     };
   } catch(e) {
     return null;

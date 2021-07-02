@@ -23,6 +23,10 @@ export class UserModel extends Model {
     disableTracking: {
       type: DataTypes.BOOLEAN,
       allowNull: true,
+    },
+    isBot: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
     }
   } as ModelFields;
 

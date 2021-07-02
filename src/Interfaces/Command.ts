@@ -9,6 +9,7 @@ export interface CommandMap {
 
 export interface Command {
   cmd:          string,     // Extracted Command
+  userId:       string,     // User's ID that executed the Command
   directArg:    string,     // Following Argument
   arguments:    string[],   // All Raw Arguments
   execute: (msg: Message, cmd: Command) => Promise<any>,

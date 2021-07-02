@@ -9,6 +9,7 @@ export interface IUser {
   userID:             string,
   username?:          string | null,
   disableTracking:    boolean | null,
+  isBot:              boolean | null,
 }
 
 // Status Model Interface

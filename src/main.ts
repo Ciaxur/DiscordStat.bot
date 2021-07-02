@@ -98,25 +98,31 @@ startBot({
         // Extract/Confirm Valid Command
         if (content.startsWith('!')) {
           Log.Info(`${author.username} issued command: ${content}`);
+
           const command = parseCommand(content);
-          command?.execute(msg, command)
-            .then(() => {   // Store Executed Command from Server
-              const uuid = v4.generate().split('-').pop();
-              const combined_cmd = command.cmd + (command.arguments.length
-                ? ' ' + command.arguments.join(' ') : '');
-                
-              GuildActivityModel.create({
-                guildActivityID: uuid as string,
-                guildID: msg.guildID,
-                command: combined_cmd,
+          if (command) {
+            // Add Additional Command Information
+            command.userId = author.id;
+
+            command?.execute(msg, command)
+              .then(() => {   // Store Executed Command from Server
+                const uuid = v4.generate().split('-').pop();
+                const combined_cmd = command.cmd + (command.arguments.length
+                  ? ' ' + command.arguments.join(' ') : '');
+                  
+                GuildActivityModel.create({
+                  guildActivityID: uuid as string,
+                  guildID: msg.guildID,
+                  command: combined_cmd,
+                })
+                  .then(() => Log.Info(`Guild Activity Added to ${msg.guildID}: ${combined_cmd} -> ${uuid}`))
+                  .catch(err => Log.Error('Guild Activity Error:', err));
               })
-                .then(() => Log.Info(`Guild Activity Added to ${msg.guildID}: ${combined_cmd} -> ${uuid}`))
-                .catch(err => Log.Error('Guild Activity Error:', err));
-            })
-            .catch(err => {
-              Log.Error('Error:', err);
-              return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
-            });
+              .catch(err => {
+                Log.Error('Error:', err);
+                return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
+              });
+          }
         }
       }
     },
@@ -158,6 +164,7 @@ startBot({
               userID: precense.user.id,
               username: precense.user.username || null,
               disableTracking: null,
+              isBot: precense.user.bot,
             } as Partial<IUser>)
               // Update PrecenseLog
               .then(user => updateUserPrecense(user, precense))
