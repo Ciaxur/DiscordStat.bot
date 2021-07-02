@@ -1,10 +1,11 @@
-import { Message } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
+import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
+import { Message, sendDirectMessage } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
-import { IPrecenseLog, IUser } from '../Interfaces/Database.ts';
+import { IPrecenseLog, IUser, IBotTracker, ITimestamps } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
-import { PrecenseLogModel, UserModel } from '../Database/index.ts';
+import { PrecenseLogModel, UserModel, BotTrackerModel } from '../Database/index.ts';
 import { ITimeDifference } from '../Helpers/utils.ts';
 import { Cache } from '../Helpers/Cache.ts';
 import { SERVER_COMMANDS } from './ServerCommands.ts';
@@ -14,7 +15,10 @@ import Logger from '../Logging/index.ts';
 // CACHE & LOGING
 const Log = Logger.getInstance();
 const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
-export const UPTIME_CACHE_TTL = 1 * 60 * 1000;   // 1 Minute
+const USER_CACHE = new Cache<IUser>(10);
+
+export const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
+export const USER_CACHE_TTIL  = 10 * 60 * 1000;   // 10 Minutes
 
 interface IWeeklyUptime {
   startDate: Date,
@@ -238,6 +242,99 @@ async function command_donate(msg: Message, cmd: Command): Promise<any> {
   })
 }
 
+/**
+ * Toggles bot tracking for a user
+ * @param msg Message Object
+ * @param cmd Parsed Command Object
+ */
+ async function command_toggle_bot_tracking(msg: Message, cmd: Command): Promise<any> {
+  // Expect direct argument to be the user id
+  if (cmd.directArg === undefined) {
+    return msg.reply(`Invalid command usage: Expecting argument to be passed \`${cmd.cmd} [bot-id]\``);
+  }
+
+  // Check if user is being tracked in the first place
+  const user: IUser | undefined = (await UserModel.find(cmd.directArg)) as any;
+  if (!user) {
+    return msg.reply('The user provided is not being tracked by me');
+  }
+
+  // ONLY Bots can be tracked like that
+  else if (user.isBot !== true) {
+    return msg.reply('The user provided is not a bot! I cannot track non-bot users');
+  }
+  
+  
+  // Create a new Bot Tracker Entry if not available
+  const botTrackEntry: IBotTracker[] = await BotTrackerModel
+    .where('botId', cmd.directArg)
+    .where('userId', cmd.userId)
+    .get() as any;
+  
+  if (!botTrackEntry.length) {
+    const uuid = v4.generate().split('-').pop();
+    const entry = await BotTrackerModel.create({
+      createdAt: new Date(),
+      trackId: uuid,
+      botId: cmd.directArg,
+      userId: cmd.userId,
+    } as any);
+
+    Log.Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
+    return msg.reply(`Added bot tracking for bot '${cmd.directArg}`);
+  }
+
+  // Add/remove the user from the notification list of the bot (Toggle)
+  else {
+    const entry = botTrackEntry[0];
+    
+    await BotTrackerModel.deleteById(entry.trackId);
+    Log.Internal('botTrackEntry', `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
+    
+    return msg.reply(`Removed bot tracking entry for '${entry.botId}'`);
+  }
+}
+
+
+/**
+ * DMs a list for all bot tracking for a user
+ * @param msg Message Object
+ * @param cmd Parsed Command Object
+ */
+async function command_list_bot_tracking(msg: Message, cmd: Command): Promise<any> {
+  const botTrackEntries: (IBotTracker & ITimestamps)[] = await BotTrackerModel
+    .where('userId', cmd.userId)
+    .get() as any;
+
+  if (botTrackEntries.length) {
+    let list_str = `**Detailed list of ${botTrackEntries.length} Bots being tracked:**\n`;
+    
+    for (const entry of botTrackEntries) {
+      // Check if User info in Cache
+      let bot_user = USER_CACHE.get(entry.botId);
+      if (!bot_user) {
+        bot_user = (await UserModel.find(entry.botId)) as any;
+        if (!bot_user) {
+          throw new Error(`Bot User ${entry.botId} not found in Database`);
+        }
+        
+        Log.Info(`Adding ${bot_user.userID} to User Cache`);
+        USER_CACHE.set(bot_user.userID, bot_user, USER_CACHE_TTIL);
+      }
+
+      // Append Information
+      const tracking_started = utils.getTimeDifferenceString(Date.now() - entry.createdAt.getTime());
+      list_str += `- ${bot_user.username} [*${bot_user.userID}*]: tracked since ${tracking_started.str}\n`;
+    }
+
+    sendDirectMessage(cmd.userId, list_str);
+    return msg.reply(`You have ${botTrackEntries.length} Bots being tracked. I DM'ed you a detailed list`);
+  } else {
+    return msg.reply('You have no bots being tacked');
+  }
+}
+
+
 export const USER_COMMANDS: CommandMap = {
   'help': {
     exec: command_help,
@@ -250,6 +347,14 @@ export const USER_COMMANDS: CommandMap = {
   'tracking-set': {
     exec: command_tracking_set,
     description: 'Sets tracking state given by user argument. !tracking-set [true/false]',
+  },
+  'toggle-bot-tracking': {
+    exec: command_toggle_bot_tracking,
+    description: 'Toggles user being notified of bot\'s status change. !toggle-bot-tracking [bot-id]',
+  },
+  'list-bot-tracking': {
+    exec: command_list_bot_tracking,
+    description: 'DMs a list for all Bots being tracked to user',
   },
   'clear-data': {
     exec: command_clear_data,
