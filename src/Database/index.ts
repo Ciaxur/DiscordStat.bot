@@ -7,3 +7,4 @@ export * from './User.model.ts';
 export * from './Connection.ts';
 export * from './Guild.model.ts';
 export * from './GuildActivity.model.ts';
+export * from './BotTracker.model.ts';

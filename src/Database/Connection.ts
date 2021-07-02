@@ -4,6 +4,7 @@ import {
   PrecenseLogModel,
   UserModel, StatusModel,
   GuildModel, GuildActivityModel,
+  BotTrackerModel,
 } from './index.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
@@ -39,7 +40,7 @@ export async function initConnection(env: IEnvironment, options = defaultOptions
   });
   
   // Link Models to DB
-  db.link([UserModel, StatusModel, PrecenseLogModel, GuildModel, GuildActivityModel]);
+  db.link([UserModel, StatusModel, PrecenseLogModel, GuildModel, GuildActivityModel, BotTrackerModel]);
 
   // Sync with the Database
   if (options.sync) {

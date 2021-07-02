@@ -40,3 +40,9 @@ export interface IGuildActivity {
   guildID:          string,
   command:          string,
 }
+
+export interface IBotTracker {
+  trackId:    string,       // Unique ID
+  botId:      string,       // Bot's ID that is being Tracked
+  userId:     string,       // User's ID to notify
+}
