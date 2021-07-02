@@ -54,6 +54,8 @@ All commands should be prefixed with `!`.
 - `help`: Print the Help Menu
 - `tracking-status`: Prints status of tracking enable/disable for user
 - `tracking-set [true/false]`: Sets tracking state given by user argument [true/false]
+- `toggle-bot-tracking`: Toggles user being notified of bot's status change. !toggle-bot-tracking [bot-id]
+- `list-bot-tracking`: DMs a list for all Bots being tracked to user
 - `clear-data`: Clears all stored logs of user. (*No Confirmation is given*)
 - `uptime`: Prints User's most recent uptime
 - `week-uptime`: Prints User's uptime during the past 7 days
