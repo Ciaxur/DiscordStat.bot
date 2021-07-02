@@ -1,14 +1,16 @@
-import { PresenceUpdatePayload, startBot } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
+import { PresenceUpdatePayload, startBot, sendDirectMessage } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
 import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import {
   PrecenseLogModel, UserModel,
   GuildModel, GuildActivityModel,
+  BotTrackerModel,
   initConnection,
 } from './Database/index.ts';
 import {
   IPrecenseLog, IUser, StatusType,
+  IBotTracker,
 } from './Interfaces/Database.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { parseCommand } from './Commands/index.ts';
@@ -71,6 +73,40 @@ async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) 
   } as any)
     .then(plog => Log.Info('Precense Log Created for ', user.userID))
     .catch(err => Log.Error('Precense Log could not be created: ', err));
+}
+
+async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
+  Log.Internal('checkAndNotifyBotTracking', 'Notifying users of bot presence change');
+
+  // Get tracking entries
+  const tracking_entries: IBotTracker[] = await BotTrackerModel
+    .where('botId', botUser.userID)
+    .get() as any;
+  
+  // Check if Presence Changed
+  const status: StatusType = statusEnumFromString(newPresence);
+  const entryResult = await PrecenseLogModel
+    .where('userID', botUser.userID)
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .get();
+
+  if (entryResult.length) {
+    const pEntry: IPrecenseLog & Model = (entryResult as any)[0];
+    const pStatusID = parseInt(pEntry.statusID as any);
+
+    // Same as Entry, no new precense to log
+    if (pEntry.endTime === null && pStatusID === status) {
+      Log.Print('No new precense for bot. Not notifying anyone.');
+      return;
+    }
+  }
+  
+  // Presence Changed, notify all
+  Log.Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change`);
+  for (const entry of tracking_entries) {
+    return sendDirectMessage(entry.userId, `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
+  }
 }
 
 // Initialize Bot
@@ -183,6 +219,11 @@ startBot({
                 .update({ username: precense.user.username })
                 .then(() => Log.Info('Username updated'))
                 .catch(err => Log.Error('Could not update username: ', err));
+            }
+            
+            // Bot Tracking Check
+            if ((user as any as IUser).isBot === true) {
+              await checkAndNotifyBotTracking((user as any as IUser), precense.status);
             }
             
             // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
