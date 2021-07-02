@@ -67,6 +67,9 @@ All commands should be prefixed with `!`.
 - `version`: Prints Bot's current version
 
 **Server-Specific Commands**
+- `set-bot-channel`: Sets the Server Channel that the bot should respond to [owner only]
+- `show-bot-channel`: Sets the Server Channel that the bot should respond to
+- `clear-bot-channel`: Clears the Server Channel that the bot should respond to [owner only]
 - `server-interaction`: Prints the current server's user interaction with this bot
 - `info`: Prints bot information
 

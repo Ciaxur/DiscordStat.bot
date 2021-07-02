@@ -31,8 +31,9 @@ export interface IPrecenseLog {
 }
 
 export interface IGuild {
-  guildID:    string,
-  guildName:  string,
+  guildID:          string,
+  guildName:        string,
+  responseChannel:  string,   // Channel to Respond to
 }
 
 export interface IGuildActivity {

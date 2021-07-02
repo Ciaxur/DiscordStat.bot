@@ -19,8 +19,7 @@ export class Cache<T> {
   private hardCacheLimit: number;
   private lastCachedItem: ICacheData<T> | null = null;
   
-  
-  public _cached_data: { [key: string]: ICacheData<T> };
+  private _cached_data: { [key: string]: ICacheData<T> };
   
   /**
    * Constructs a Cache instance with a set max size to cache
@@ -93,6 +92,18 @@ export class Cache<T> {
 
     // TRACK LAST CACHED
     this.lastCachedItem = cached_item;
+  }
+
+  /**
+   * Sets the TTL on a given key IF available
+   * @param key Data's key to set TTL of
+   * @param ttl Tile to live
+   */
+  public expire(key: string, ttl: number) {
+    if (this._cached_data[key]) {
+      Log.Internal('Cache.expire', `Setting '${key}''s ttl to ${ttl}`);
+      this._cached_data[key].ttl = ttl;
+    }
   }
 
   private async clean_stale_old_entries(cachedEntries: [string, ICacheData<T>][]) {

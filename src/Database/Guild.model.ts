@@ -18,6 +18,10 @@ export class GuildModel extends Model {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    responseChannel: {
+      type: DataTypes.STRING,
+      allowNull: true,          // Default is any channel
+    }
   } as ModelFields;
 
   static defaults = {

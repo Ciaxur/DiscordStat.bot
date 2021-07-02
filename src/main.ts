@@ -35,8 +35,8 @@ const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
 
 // Caches
-const GUILD_CACHE = new Cache<IGuild>(5);
-const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours
+export const GUILD_CACHE = new Cache<IGuild>(5);
+export const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours
 
 
 async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) {
@@ -124,6 +124,7 @@ async function addGuild(guild: Guild) {
   return GuildModel.create({
     guildID: guild.id,
     guildName: guild.name,
+    responseChannel: null,
   })
     .then(() => Log.Info(`Guild Added: ${guild.name}`))
     .catch(err => Log.Error('Guild Model Create Error: ', err));
@@ -143,14 +144,32 @@ startBot({
       gatewayReady = true;
     },
 
-    messageCreate(msg) {
+    async messageCreate(msg) {
       // Handle Gateway Readiness
       if (!gatewayReady) return;
       
       const { author, content, channel } = msg;
 
+      // Check Guild in Cache
+      let cached_guild = GUILD_CACHE.get(msg.guildID);
+
+      if (!cached_guild) {
+        // Make sure Guild is stored in DB
+        const guild_entry = await GuildModel.where('guildID', msg.guildID).get();
+        if (!guild_entry.length) {
+          Log.Error('Guild ID not found: ', msg.guildID);
+          const guild = await getGuild(msg.guildID);
+          GUILD_CACHE.set(msg.guildID, guild as any, GUILD_CACHE_TTL);
+          await addGuild(guild as any);
+          cached_guild = guild as any;
+        } else {
+          GUILD_CACHE.set(msg.guildID, (guild_entry as any)[0], GUILD_CACHE_TTL);
+          cached_guild = (guild_entry as any)[0];
+        }
+      }
+
       // Handle message only in verified channels
-      if (channel?.name === 'bot-commands') {
+      if (cached_guild?.responseChannel === null || channel?.name === cached_guild?.responseChannel) {
         // Extract/Confirm Valid Command
         if (content.startsWith('!')) {
           Log.Info(`${author.username} issued command: ${content}`);
@@ -165,22 +184,6 @@ startBot({
                 const uuid = v4.generate().split('-').pop();
                 const combined_cmd = command.cmd + (command.arguments.length
                   ? ' ' + command.arguments.join(' ') : '');
-
-                // Check Guild in Cache
-                const cached_guild = GUILD_CACHE.get(msg.guildID);
-
-                if (!cached_guild) {
-                  // Make sure Guild is stored in DB
-                  const guild_entry = await GuildModel.where('guildID', msg.guildID).get();
-                  if (!guild_entry.length) {
-                    Log.Error('Guild ID not found: ', msg.guildID);
-                    const guild = await getGuild(msg.guildID);
-                    GUILD_CACHE.set(msg.guildID, guild as any, GUILD_CACHE_TTL);
-                    await addGuild(guild as any);
-                  } else {
-                    GUILD_CACHE.set(msg.guildID, cached_guild as any, GUILD_CACHE_TTL);
-                  }
-                }
 
                 GuildActivityModel.create({
                   guildActivityID: uuid as string,
