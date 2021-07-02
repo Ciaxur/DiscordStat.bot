@@ -1,4 +1,8 @@
-import { PresenceUpdatePayload, startBot, sendDirectMessage, getUser } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
+import { 
+  PresenceUpdatePayload, startBot, 
+  sendDirectMessage, getUser, getGuild,
+  Guild,
+} from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
 import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
@@ -10,11 +14,12 @@ import {
 } from './Database/index.ts';
 import {
   IPrecenseLog, IUser, StatusType,
-  IBotTracker,
+  IBotTracker, IGuild,
 } from './Interfaces/Database.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { parseCommand } from './Commands/index.ts';
 import { statusEnumFromString } from './Helpers/utils.ts';
+import { Cache } from './Helpers/Cache.ts';
 
 // Logging System
 import Logger from './Logging/index.ts';
@@ -28,6 +33,11 @@ const env: IEnvironment = config() as any;
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
+
+// Caches
+const GUILD_CACHE = new Cache<IGuild>(5);
+const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours
+
 
 async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) {
   // Check if there is a pending Status
@@ -109,6 +119,16 @@ async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
   }
 }
 
+async function addGuild(guild: Guild) {
+  // Store Guild Entry
+  return GuildModel.create({
+    guildID: guild.id,
+    guildName: guild.name,
+  })
+    .then(() => Log.Info(`Guild Added: ${guild.name}`))
+    .catch(err => Log.Error('Guild Model Create Error: ', err));
+}
+
 // Initialize Bot
 let gatewayReady = false;
 startBot({
@@ -141,11 +161,27 @@ startBot({
             command.userId = author.id;
 
             command?.execute(msg, command)
-              .then(() => {   // Store Executed Command from Server
+              .then(async () => {   // Store Executed Command from Server
                 const uuid = v4.generate().split('-').pop();
                 const combined_cmd = command.cmd + (command.arguments.length
                   ? ' ' + command.arguments.join(' ') : '');
-                  
+
+                // Check Guild in Cache
+                const cached_guild = GUILD_CACHE.get(msg.guildID);
+
+                if (!cached_guild) {
+                  // Make sure Guild is stored in DB
+                  const guild_entry = await GuildModel.where('guildID', msg.guildID).get();
+                  if (!guild_entry.length) {
+                    Log.Error('Guild ID not found: ', msg.guildID);
+                    const guild = await getGuild(msg.guildID);
+                    GUILD_CACHE.set(msg.guildID, guild as any, GUILD_CACHE_TTL);
+                    await addGuild(guild as any);
+                  } else {
+                    GUILD_CACHE.set(msg.guildID, cached_guild as any, GUILD_CACHE_TTL);
+                  }
+                }
+
                 GuildActivityModel.create({
                   guildActivityID: uuid as string,
                   guildID: msg.guildID,
@@ -156,7 +192,9 @@ startBot({
               })
               .catch(err => {
                 Log.Error('Error:', err);
-                return msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`);
+                msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`)
+                  .catch(err => Log.Error('Message Reply Error:', err));
+                return;
               });
           }
         }
@@ -164,23 +202,7 @@ startBot({
     },
 
     guildLoaded(guild) {
-      Log.Info('Guild Loaded,', guild.name);
-
-      // Keep track of Connected Guilds
-      GuildModel
-        .find(guild.id)
-        .then(entry => {
-          if (!entry) {
-            // Store Guild Entry
-            GuildModel.create({
-              guildID: guild.id,
-              guildName: guild.name,
-            })
-              .then(() => Log.Info(`Guild Added: ${guild.name}`))
-              .catch(err => Log.Error('Guild Model Create Error: ', err));
-          }
-        })
-        .catch(err => Log.Error('Guild Loaded Fetch Error:', err));
+      Log.Info(`Guild [${guild.id}] Loaded,`, guild.name);
     },
 
     presenceUpdate(precense) {
