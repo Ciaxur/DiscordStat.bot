@@ -1,8 +1,8 @@
 import { 
-  PresenceUpdatePayload, startBot, 
+  PresenceUpdate, startBot, 
   sendDirectMessage, getUser, getGuild,
   Guild,
-} from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
+} from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
 import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
@@ -39,7 +39,7 @@ export const GUILD_CACHE = new Cache<IGuild>(5);
 export const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours
 
 
-async function updateUserPrecense(user: Model, precense: PresenceUpdatePayload) {
+async function updateUserPrecense(user: Model, precense: PresenceUpdate) {
   // Check if there is a pending Status
   const entryResult = await PrecenseLogModel
     .where('userID', user.userID as string)
@@ -115,7 +115,7 @@ async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
   // Presence Changed, notify all
   Log.Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change`);
   for (const entry of tracking_entries) {
-    return sendDirectMessage(entry.userId, `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
+    return sendDirectMessage(BigInt(entry.userId), `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
   }
 }
 
@@ -135,8 +135,8 @@ let gatewayReady = false;
 startBot({
   token: env.BOT_TOKEN,
   intents: [
-    'GUILDS', 'GUILD_PRESENCES', 
-    'DIRECT_MESSAGES', 'GUILD_MESSAGES',
+    'Guilds', 'GuildPresences', 
+    'DirectMessages', 'GuildMessages',
   ],
   eventHandlers: {
     ready() {
@@ -148,22 +148,23 @@ startBot({
       // Handle Gateway Readiness
       if (!gatewayReady) return;
       
-      const { author, content, channel } = msg;
+      const { content, channel } = msg;
+      const author = await getUser(msg.authorId);     // TODO: Cache me!
 
       // Check Guild in Cache
-      let cached_guild = GUILD_CACHE.get(msg.guildID);
+      let cached_guild = GUILD_CACHE.get(msg.guildId.toString());
 
       if (!cached_guild) {
         // Make sure Guild is stored in DB
-        const guild_entry = await GuildModel.where('guildID', msg.guildID).get();
+        const guild_entry = await GuildModel.where('guildID', msg.guildId.toString()).get();
         if (!guild_entry.length) {
-          Log.Error('Guild ID not found: ', msg.guildID);
-          const guild = await getGuild(msg.guildID);
-          GUILD_CACHE.set(msg.guildID, guild as any, GUILD_CACHE_TTL);
+          Log.Error('Guild ID not found: ', msg.guildId);
+          const guild = await getGuild(msg.guildId);
+          GUILD_CACHE.set(msg.guildId.toString(), guild as any, GUILD_CACHE_TTL);
           await addGuild(guild as any);
           cached_guild = guild as any;
         } else {
-          GUILD_CACHE.set(msg.guildID, (guild_entry as any)[0], GUILD_CACHE_TTL);
+          GUILD_CACHE.set(msg.guildId.toString(), (guild_entry as any)[0], GUILD_CACHE_TTL);
           cached_guild = (guild_entry as any)[0];
         }
       }
@@ -187,10 +188,10 @@ startBot({
 
                 GuildActivityModel.create({
                   guildActivityID: uuid as string,
-                  guildID: msg.guildID,
+                  guildID: msg.guildId.toString(),
                   command: combined_cmd,
                 })
-                  .then(() => Log.Info(`Guild Activity Added to ${msg.guildID}: ${combined_cmd} -> ${uuid}`))
+                  .then(() => Log.Info(`Guild Activity Added to ${msg.guildId}: ${combined_cmd} -> ${uuid}`))
                   .catch(err => Log.Error('Guild Activity Error:', err));
               })
               .catch(err => {
@@ -219,7 +220,7 @@ startBot({
           // New User
           if (user === undefined) {
             // Fetch ALL Data for User
-            const userPayload = await getUser(precense.user.id);
+            const userPayload = await getUser(BigInt(precense.user.id));
             Log.Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
             
             // Add New Precense
