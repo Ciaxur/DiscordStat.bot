@@ -16,7 +16,7 @@ import {
   IPrecenseLog, IUser, StatusType,
   IBotTracker, IGuild,
 } from './Interfaces/Database.ts';
-import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
+import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { parseCommand } from './Commands/index.ts';
 import { statusEnumFromString } from './Helpers/utils.ts';
 import { Cache } from './Helpers/Cache.ts';

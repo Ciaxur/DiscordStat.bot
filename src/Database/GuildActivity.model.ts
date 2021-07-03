@@ -1,5 +1,5 @@
-import { DataTypes, Model, Relationships } from 'https://deno.land/x/denodb@v1.0.24/mod.ts';
-import { ModelDefaults, ModelFields } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
+import { DataTypes, Model, Relationships } from 'https://deno.land/x/denodb@v1.0.38/mod.ts';
+import { ModelDefaults, ModelFields } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { GuildModel } from './Guild.model.ts';
 
 /**
@@ -17,7 +17,6 @@ export class GuildActivityModel extends Model {
       type: DataTypes.STRING,
     },
     guildID: {
-      ...Relationships.belongsTo(GuildModel),
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -34,3 +33,6 @@ export class GuildActivityModel extends Model {
   static defaults = {
   } as ModelDefaults;
 };
+
+// Define Relationship
+Relationships.belongsTo(GuildActivityModel, GuildModel, { foreignKey: 'guildID' });
