@@ -3,7 +3,7 @@ import {
   sendDirectMessage, getUser, getGuild,
   Guild,
 } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
-import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
+import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import {

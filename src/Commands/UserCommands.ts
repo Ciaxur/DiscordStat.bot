@@ -1,4 +1,4 @@
-import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
+import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
 import { DiscordenoMessage, sendDirectMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
