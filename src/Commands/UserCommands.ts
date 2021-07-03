@@ -273,15 +273,14 @@ async function command_donate(msg: DiscordenoMessage, cmd: Command): Promise<any
   
   if (!botTrackEntry.length) {
     const uuid = v4.generate().split('-').pop();
-    const entry = await BotTrackerModel.create({
-      createdAt: new Date(),
+    await BotTrackerModel.create({
       trackId: uuid,
       botId: cmd.directArg,
       userId: cmd.userId,
     } as any);
 
     Log.Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
-    return msg.reply(`Added bot tracking for bot '${cmd.directArg}`);
+    return msg.reply(`Added bot tracking for bot '${cmd.directArg}'`);
   }
 
   // Add/remove the user from the notification list of the bot (Toggle)
