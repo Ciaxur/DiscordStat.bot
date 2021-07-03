@@ -147,6 +147,12 @@ startBot({
     async messageCreate(msg) {
       // Handle Gateway Readiness
       if (!gatewayReady) return;
+
+      // Message not from Server (Guild)
+      if (msg.guildId === BigInt(0)) {
+        Log.Info(`Message did not originate from a Guild. GuildID = ${msg.guildId}`);
+        return;
+      }
       
       const { content, channel } = msg;
       const author = await getUser(msg.authorId);     // TODO: Cache me!
@@ -154,19 +160,23 @@ startBot({
       // Check Guild in Cache
       let cached_guild = GUILD_CACHE.get(msg.guildId.toString());
 
-      if (!cached_guild) {
-        // Make sure Guild is stored in DB
-        const guild_entry = await GuildModel.where('guildID', msg.guildId.toString()).get();
-        if (!guild_entry.length) {
-          Log.Error('Guild ID not found: ', msg.guildId);
-          const guild = await getGuild(msg.guildId);
-          GUILD_CACHE.set(msg.guildId.toString(), guild as any, GUILD_CACHE_TTL);
-          await addGuild(guild as any);
-          cached_guild = guild as any;
-        } else {
-          GUILD_CACHE.set(msg.guildId.toString(), (guild_entry as any)[0], GUILD_CACHE_TTL);
-          cached_guild = (guild_entry as any)[0];
+      try {
+        if (!cached_guild) {
+          // Make sure Guild is stored in DB
+          const guild_entry = await GuildModel.where('guildID', msg.guildId.toString()).get();
+          if (!guild_entry.length) {
+            Log.Error('Guild ID not found: ', msg.guildId);
+            const guild = await getGuild(msg.guildId);
+            GUILD_CACHE.set(msg.guildId.toString(), guild as any, GUILD_CACHE_TTL);
+            await addGuild(guild as any);
+            cached_guild = guild as any;
+          } else {
+            GUILD_CACHE.set(msg.guildId.toString(), (guild_entry as any)[0], GUILD_CACHE_TTL);
+            cached_guild = (guild_entry as any)[0];
+          }
         }
+      } catch(err) {
+        Log.Error('Message Create Guild Cache Error: ', err);
       }
 
       // Handle message only in verified channels
