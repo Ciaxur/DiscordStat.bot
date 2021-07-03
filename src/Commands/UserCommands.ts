@@ -274,6 +274,7 @@ async function command_donate(msg: DiscordenoMessage, cmd: Command): Promise<any
   if (!botTrackEntry.length) {
     const uuid = v4.generate().split('-').pop();
     await BotTrackerModel.create({
+      createdAt: new Date().toUTCString(),
       trackId: uuid,
       botId: cmd.directArg,
       userId: cmd.userId,
