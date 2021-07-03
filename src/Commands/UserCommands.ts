@@ -12,13 +12,14 @@ import { SERVER_COMMANDS } from './ServerCommands.ts';
 import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
 
-// CACHE & LOGING
+// SHARED CACHE
+import { USER_CACHE, USER_CACHE_TTL } from '../Helpers/Cache.ts';
+
+// LOCAL CACHE & LOGING
 const Log = Logger.getInstance();
 const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
-const USER_CACHE = new Cache<IUser>(10);
+const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
 
-export const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
-export const USER_CACHE_TTIL  = 10 * 60 * 1000;   // 10 Minutes
 
 interface IWeeklyUptime {
   startDate: Date,
@@ -319,7 +320,7 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
         }
         
         Log.Info(`Adding ${bot_user.userID} to User Cache`);
-        USER_CACHE.set(bot_user.userID, bot_user, USER_CACHE_TTIL);
+        USER_CACHE.set(bot_user.userID, bot_user, USER_CACHE_TTL);
       }
 
       // Append Information

@@ -1,13 +1,10 @@
-import { 
-  startBot, getUser, getGuild,
-} from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { startBot, getUser } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import { 
   UserModel, initConnection,
 } from './Database/index.ts';
-import { IUser, IGuild } from './Interfaces/Database.ts';
-import { Cache } from './Helpers/Cache.ts';
+import { IUser } from './Interfaces/Database.ts';
 
 // Actions
 import { updateUserPresence } from './Actions/Presence.ts';
@@ -26,10 +23,6 @@ const env: IEnvironment = config() as any;
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
-
-// Caches
-export const GUILD_CACHE = new Cache<IGuild>(5);
-export const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours
 
 
 // Initialize Bot
