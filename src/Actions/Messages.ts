@@ -3,15 +3,20 @@
 */
 import { 
   getUser, getGuild,
-  DiscordenoMessage,
+  DiscordenoMessage, User,
 } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
 import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
-import { GUILD_CACHE, GUILD_CACHE_TTL } from '../main.ts';
 
 // Database & Utilities
 import { GuildModel, GuildActivityModel } from '../Database/index.ts'
 import { parseCommand } from '../Commands/index.ts';
 import { addGuild } from '../Actions/Guild.ts';
+
+// Shared Cache
+import {
+  USER_DISCORD_CACHE, USER_DISCORD_CACHE_TTL,
+  GUILD_CACHE, GUILD_CACHE_TTL,
+} from '../Helpers/Cache.ts';
 
 // Logging System
 import Logger from '../Logging/index.ts';
@@ -23,7 +28,15 @@ const Log = Logger.getInstance();
  */
 export async function handleGuildMessage(msg: DiscordenoMessage) {
   const { content, channel } = msg;
-  const author = await getUser(msg.authorId);     // TODO: Cache me!
+
+  // Check Cache for Author
+  let author: User | null = USER_DISCORD_CACHE.get(msg.authorId.toString());
+
+  // Fetch & Cache user
+  if (!author) {
+    author = await getUser(msg.authorId);
+    USER_DISCORD_CACHE.set(msg.authorId.toString(), author, USER_DISCORD_CACHE_TTL);
+  }
 
   // Check Guild in Cache
   let cached_guild = GUILD_CACHE.get(msg.guildId.toString());

@@ -1,6 +1,7 @@
 /*
   Cache Class abstracting away Cache stale and cleanup
 */
+import { User } from "https://deno.land/x/discordeno@11.2.0/src/types/users/user.ts";
 import { IUser, IGuild } from '../Interfaces/Database.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
@@ -172,7 +173,12 @@ export class Cache<T> {
 
 // SHARED CACHE OBJECTS
 export const GUILD_CACHE = new Cache<IGuild>(5);
-export const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 Hours
+export const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000;         // 24 Hours
 
-export const USER_CACHE = new Cache<IUser>(100);
-export const USER_CACHE_TTL  = 10 * 60 * 1000;     // 10 Minutes
+// cache from db
+export const USER_DB_CACHE = new Cache<IUser>(100);
+export const USER_DB_CACHE_TTL  = 10 * 60 * 1000;           // 10 Minutes
+
+// cache from Discord API
+export const USER_DISCORD_CACHE = new Cache<User>(100);
+export const USER_DISCORD_CACHE_TTL  = 10 * 60 * 1000;      // 10 Minutes

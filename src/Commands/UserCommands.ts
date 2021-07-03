@@ -13,7 +13,7 @@ import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
 
 // SHARED CACHE
-import { USER_CACHE, USER_CACHE_TTL } from '../Helpers/Cache.ts';
+import { USER_DB_CACHE, USER_DB_CACHE_TTL } from '../Helpers/Cache.ts';
 
 // LOCAL CACHE & LOGING
 const Log = Logger.getInstance();
@@ -312,7 +312,7 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
     
     for (const entry of botTrackEntries) {
       // Check if User info in Cache
-      let bot_user = USER_CACHE.get(entry.botId);
+      let bot_user = USER_DB_CACHE.get(entry.botId);
       if (!bot_user) {
         bot_user = (await UserModel.find(entry.botId)) as any;
         if (!bot_user) {
@@ -320,7 +320,7 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
         }
         
         Log.Info(`Adding ${bot_user.userID} to User Cache`);
-        USER_CACHE.set(bot_user.userID, bot_user, USER_CACHE_TTL);
+        USER_DB_CACHE.set(bot_user.userID, bot_user, USER_DB_CACHE_TTL);
       }
 
       // Append Information
