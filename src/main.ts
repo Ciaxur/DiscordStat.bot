@@ -39,7 +39,7 @@ startBot({
       gatewayReady = true;
     },
 
-    async messageCreate(msg) {
+    messageCreate(msg) {
       // Handle Gateway Readiness
       if (!gatewayReady) return;
 
@@ -60,18 +60,18 @@ startBot({
       Log.Info(`Guild [${guild.id}] Loaded,`, guild.name);
     },
 
-    presenceUpdate(precense) {
+    presenceUpdate(presence) {
       // DEBUG: Logs
-      Log.Debug(`User ${precense.user.id} changed to: ${precense.status}`);
+      Log.Debug(`User ${presence.user.id} changed to: ${presence.status}`);
       
       // Create User if User does not Exist
-      UserModel.find(precense.user.id)
+      UserModel.find(presence.user.id)
         .then(async (user) => {
 
           // New User
           if (user === undefined) {
             // Fetch ALL Data for User
-            const userPayload = await getUser(BigInt(precense.user.id));
+            const userPayload = await getUser(BigInt(presence.user.id));
             Log.Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
 
             // Add New Precense
@@ -82,7 +82,7 @@ startBot({
               isBot: userPayload.bot,
             } as any)
               // Update PrecenseLog
-              .then(user => updateUserPresence(user, precense))
+              .then(user => updateUserPresence(user, presence))
               .catch(err => Log.Error('User Creation Error:', err));
           }
 
@@ -91,23 +91,23 @@ startBot({
             Log.Info('User Found: ', user.userID);
 
             // Update Username if username is null
-            if (precense.user.username && user.username === null) {
-              Log.Info(`Updating user ${user.userID}'s username to '${precense.user.username}'`);
+            if (presence.user.username && user.username === null) {
+              Log.Info(`Updating user ${user.userID}'s username to '${presence.user.username}'`);
               UserModel
-                .where('userID', precense.user.id)
-                .update({ username: precense.user.username })
+                .where('userID', presence.user.id)
+                .update({ username: presence.user.username })
                 .then(() => Log.Info('Username updated'))
                 .catch(err => Log.Error('Could not update username: ', err));
             }
             
             // Bot Tracking Check
             if ((user as any as IUser).isBot === true) {
-              await checkAndNotifyBotTracking((user as any as IUser), precense.status);
+              await checkAndNotifyBotTracking((user as any as IUser), presence.status);
             }
             
             // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
             if ((user as any as IUser).disableTracking !== true) {
-              updateUserPresence(user, precense);
+              updateUserPresence(user, presence);
             }
           }
 

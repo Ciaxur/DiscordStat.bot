@@ -25,8 +25,8 @@ const Log = Logger.getInstance();
 export async function updateUserPresence(user: Model, presence: PresenceUpdate) {
   // Check if there is a pending Status
   const entryResult = await PrecenseLogModel
-    .where('userID', user.userID as string)
-    .orderBy('created_at', 'desc')
+    .where('userID', user.userID?.toString() as string)
+    .orderBy('startTime', 'desc')
     .limit(1)
     .get();
 
