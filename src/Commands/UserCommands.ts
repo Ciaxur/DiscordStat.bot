@@ -45,7 +45,7 @@ async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any
       const precenseLogs = (await PrecenseLogModel
         .where('userID', user.userID as string)
         .where('statusID', StatusType.offline.toString())
-        .orderBy('created_at', 'desc')
+        .orderBy('startTime', 'desc')
         .limit(1)
         .get()) as Model[];
       
