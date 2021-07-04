@@ -12,13 +12,14 @@ import { SERVER_COMMANDS } from './ServerCommands.ts';
 import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
 
-// CACHE & LOGING
+// SHARED CACHE
+import { USER_DB_CACHE, USER_DB_CACHE_TTL } from '../Helpers/Cache.ts';
+
+// LOCAL CACHE & LOGING
 const Log = Logger.getInstance();
 const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
-const USER_CACHE = new Cache<IUser>(10);
+const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
 
-export const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
-export const USER_CACHE_TTIL  = 10 * 60 * 1000;   // 10 Minutes
 
 interface IWeeklyUptime {
   startDate: Date,
@@ -34,7 +35,7 @@ interface IWeeklyUptime {
  * @param cmd Parsed Command Object
  */
 async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(msg.authorId.toString())
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -44,7 +45,7 @@ async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any
       const precenseLogs = (await PrecenseLogModel
         .where('userID', user.userID as string)
         .where('statusID', StatusType.offline.toString())
-        .orderBy('created_at', 'desc')
+        .orderBy('startTime', 'desc')
         .limit(1)
         .get()) as Model[];
       
@@ -71,7 +72,7 @@ async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any
  * @param cmd Parsed Command Object
  */
 async function command_weekUptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(msg.authorId.toString())
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -166,7 +167,7 @@ async function command_version(msg: DiscordenoMessage, cmd: Command): Promise<an
  * @param cmd Parsed Command Object
  */
 async function command_tracking_status(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(msg.authorId.toString())
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -200,10 +201,10 @@ async function command_tracking_set(msg: DiscordenoMessage, cmd: Command): Promi
 
   // Update Tracking Setting
   return UserModel
-    .where('userID', msg.authorId.toString())
+    .where('userID', cmd.userId)
     .update('disableTracking', cmd.directArg.toLowerCase() === 'true' ? false : true)
     .then(() => {
-      Log.Internal('command_tracking_set', `User ${msg.authorId.toString()} Tracking Updated to ${cmd.directArg}`);
+      Log.Internal('command_tracking_set', `User ${cmd.userId} Tracking Updated to ${cmd.directArg}`);
       return msg.reply(`Tracking updated to: **${cmd.directArg.toLocaleLowerCase()}**`);
     })
     .catch(err => {
@@ -219,7 +220,7 @@ async function command_tracking_set(msg: DiscordenoMessage, cmd: Command): Promi
  */
 async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   return PrecenseLogModel
-    .where('userID', msg.authorId.toString())
+    .where('userID', cmd.userId)
     .delete()
     .then(() => msg.reply('All logged data have been removed 😺'));
 }
@@ -311,7 +312,7 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
     
     for (const entry of botTrackEntries) {
       // Check if User info in Cache
-      let bot_user = USER_CACHE.get(entry.botId);
+      let bot_user = USER_DB_CACHE.get(entry.botId);
       if (!bot_user) {
         bot_user = (await UserModel.find(entry.botId)) as any;
         if (!bot_user) {
@@ -319,7 +320,7 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
         }
         
         Log.Info(`Adding ${bot_user.userID} to User Cache`);
-        USER_CACHE.set(bot_user.userID, bot_user, USER_CACHE_TTIL);
+        USER_DB_CACHE.set(bot_user.userID, bot_user, USER_DB_CACHE_TTL);
       }
 
       // Append Information

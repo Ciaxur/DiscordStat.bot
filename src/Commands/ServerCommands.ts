@@ -2,7 +2,7 @@ import { DiscordenoMessage, getGuild } from 'https://deno.land/x/discordeno@11.2
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildActivityModel, GuildModel } from '../Database/index.ts';
 import { IGuildActivity, IGuild } from '../Interfaces/Database.ts';
-import { GUILD_CACHE } from '../main.ts';
+import { GUILD_CACHE } from '../Helpers/Cache.ts';
 import Config from '../config.ts';
 
 /**
