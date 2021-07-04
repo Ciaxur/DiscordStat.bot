@@ -82,7 +82,7 @@ startBot({
               isBot: userPayload.bot,
             } as any)
               // Update PrecenseLog
-              .then(user => updateUserPresence(user, presence))
+              .then(user => updateUserPresence(user as any, presence))
               .catch(err => Log.Error('User Creation Error:', err));
           }
 
@@ -107,13 +107,13 @@ startBot({
             
             // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
             if ((user as any as IUser).disableTracking !== true) {
-              updateUserPresence(user, presence);
+              updateUserPresence(user as any, presence);
             }
           }
 
         })
         .catch(err => {
-          Log.Error('PresenceUpdate: Find User Error:', err);
+          Log.Error('PresenceUpdate: Find User Error: ', err);
         });
         
     }
