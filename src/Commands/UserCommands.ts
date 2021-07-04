@@ -35,7 +35,7 @@ interface IWeeklyUptime {
  * @param cmd Parsed Command Object
  */
 async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(msg.authorId.toString())
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -72,7 +72,7 @@ async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any
  * @param cmd Parsed Command Object
  */
 async function command_weekUptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(msg.authorId.toString())
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -167,7 +167,7 @@ async function command_version(msg: DiscordenoMessage, cmd: Command): Promise<an
  * @param cmd Parsed Command Object
  */
 async function command_tracking_status(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(msg.authorId.toString())
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -201,10 +201,10 @@ async function command_tracking_set(msg: DiscordenoMessage, cmd: Command): Promi
 
   // Update Tracking Setting
   return UserModel
-    .where('userID', msg.authorId.toString())
+    .where('userID', cmd.userId)
     .update('disableTracking', cmd.directArg.toLowerCase() === 'true' ? false : true)
     .then(() => {
-      Log.Internal('command_tracking_set', `User ${msg.authorId.toString()} Tracking Updated to ${cmd.directArg}`);
+      Log.Internal('command_tracking_set', `User ${cmd.userId} Tracking Updated to ${cmd.directArg}`);
       return msg.reply(`Tracking updated to: **${cmd.directArg.toLocaleLowerCase()}**`);
     })
     .catch(err => {
@@ -220,7 +220,7 @@ async function command_tracking_set(msg: DiscordenoMessage, cmd: Command): Promi
  */
 async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   return PrecenseLogModel
-    .where('userID', msg.authorId.toString())
+    .where('userID', cmd.userId)
     .delete()
     .then(() => msg.reply('All logged data have been removed 😺'));
 }
