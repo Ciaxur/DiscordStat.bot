@@ -1,5 +1,5 @@
 // Project Configuration
 const CONFIG = {
-  version: '1.3.3',
+  version: '1.4.3-rc',
 }
 export default CONFIG;

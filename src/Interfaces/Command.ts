@@ -1,8 +1,8 @@
-import { Message } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
+import { DiscordenoMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
 
 export interface CommandMap {
   [cmd: string]: {
-    exec: (msg: Message, cmd: Command) => Promise<any>,
+    exec: (msg: DiscordenoMessage, cmd: Command) => Promise<any>,
     description: string,
   },
 }
@@ -12,5 +12,5 @@ export interface Command {
   userId:       string,     // User's ID that executed the Command
   directArg:    string,     // Following Argument
   arguments:    string[],   // All Raw Arguments
-  execute: (msg: Message, cmd: Command) => Promise<any>,
+  execute: (msg: DiscordenoMessage, cmd: Command) => Promise<any>,
 }

@@ -47,8 +47,11 @@ Be sure to fill in the .env file before running!
 # Copy .env.sample and create your own
 cp .env.sample .env
 
-# Runs under Deno :) Can also use the ./run.sh Script
+# Runs under Deno :)
 deno run --allow-read --allow-write --allow-net --unstable ./src/main.ts
+
+# Can run in a Container using run.sh
+./run.sh
 ```
 
 ## Commands 🤖

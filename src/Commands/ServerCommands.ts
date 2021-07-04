@@ -1,18 +1,18 @@
-import { Message, getGuild } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
+import { DiscordenoMessage, getGuild } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildActivityModel, GuildModel } from '../Database/index.ts';
 import { IGuildActivity, IGuild } from '../Interfaces/Database.ts';
-import { GUILD_CACHE } from '../main.ts';
+import { GUILD_CACHE } from '../Helpers/Cache.ts';
 import Config from '../config.ts';
 
 /**
  * Prints Command Interaction of users within the server
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_server_interaction(msg: Message, cmd: Command): Promise<any> {
+async function command_server_interaction(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Get Guild Entry
-  const guildEntry: IGuild | undefined = (await GuildModel.find(msg.guildID)) as any;
+  const guildEntry: IGuild | undefined = (await GuildModel.find(msg.guildId.toString())) as any;
 
   // Something weird happened! 
   if (!guildEntry) {
@@ -47,10 +47,10 @@ async function command_server_interaction(msg: Message, cmd: Command): Promise<a
 
 /**
  * Prints Bot Information
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_info(msg: Message, cmd: Command): Promise<any> {
+async function command_info(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Get Total Guilds Stored
   const totalGuilds = (await GuildModel.count()) || 0;
   
@@ -71,26 +71,26 @@ async function command_info(msg: Message, cmd: Command): Promise<any> {
 
 /**
  * Sets the preferred Bot Response channel
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_server_set_bot_channel(msg: Message, cmd: Command): Promise<any> {
+async function command_server_set_bot_channel(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Make sure Guild is set
-  const guild = await getGuild(msg.guildID);
+  const guild = await getGuild(msg.guildId);
   
   // Owner Only!
-  if (guild.owner_id === cmd.userId) {
+  if (guild.ownerId.toString() === cmd.userId) {
     // Validate args given
     if (!cmd.directArg) {
       return msg.send(`Invalid command! Command usage: \`${cmd.cmd} [channel name]\``);
     }
     
     await GuildModel
-      .where('guildID', guild.id)
+      .where('guildID', guild.id.toString())
       .update('responseChannel', cmd.directArg);
     
     // Make sure updated Guild is stale
-    GUILD_CACHE.expire(guild.id, -1);
+    GUILD_CACHE.expire(guild.id.toString(), -1);
       
     return msg.send(`Preferred Response Channel updated to '${cmd.directArg}'`);
   } else {
@@ -100,12 +100,12 @@ async function command_server_set_bot_channel(msg: Message, cmd: Command): Promi
 
 /**
  * Prints the preferred Bot Response channel
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_server_show_bot_channel(msg: Message, cmd: Command): Promise<any> {
+async function command_server_show_bot_channel(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Check if Guild is Cached or get from DB
-  let guild = GUILD_CACHE.get(msg.guildID) || (await GuildModel.find(msg.guildID) as any) as IGuild;
+  let guild = GUILD_CACHE.get(msg.guildId.toString()) || (await GuildModel.find(msg.guildId.toString()) as any) as IGuild;
 
   if (guild.responseChannel)
     return msg.send(`The set bot's reponse channel is '${guild.responseChannel}'`);
@@ -115,21 +115,21 @@ async function command_server_show_bot_channel(msg: Message, cmd: Command): Prom
 
 /**
  * Clears the preferred Bot Response channel
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_server_clear_bot_channel(msg: Message, cmd: Command): Promise<any> {
+async function command_server_clear_bot_channel(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Make sure Guild is set
-  const guild = await getGuild(msg.guildID);
+  const guild = await getGuild(msg.guildId);
 
   // Owner Only!
-  if (guild.owner_id === cmd.userId) {
+  if (guild.ownerId.toString() === cmd.userId) {
     await GuildModel
-      .where('guildID', guild.id)
+      .where('guildID', guild.id.toString())
       .update('responseChannel', null);
 
     // Make sure updated Guild is stale
-    GUILD_CACHE.expire(guild.id, -1);
+    GUILD_CACHE.expire(guild.id.toString(), -1);
 
     return msg.send('Preferred Response Channel has been cleared');
   } else {

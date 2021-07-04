@@ -1,6 +1,6 @@
-import { v4 } from 'https://deno.land/std@0.97.0/uuid/mod.ts';
-import { Message, sendDirectMessage } from 'https://deno.land/x/discordeno@10.5.0/mod.ts';
-import { Model } from 'https://deno.land/x/denodb@v1.0.24/lib/model.ts';
+import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
+import { DiscordenoMessage, sendDirectMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { IPrecenseLog, IUser, IBotTracker, ITimestamps } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
@@ -12,13 +12,14 @@ import { SERVER_COMMANDS } from './ServerCommands.ts';
 import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
 
-// CACHE & LOGING
+// SHARED CACHE
+import { USER_DB_CACHE, USER_DB_CACHE_TTL } from '../Helpers/Cache.ts';
+
+// LOCAL CACHE & LOGING
 const Log = Logger.getInstance();
 const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
-const USER_CACHE = new Cache<IUser>(10);
+const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
 
-export const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
-export const USER_CACHE_TTIL  = 10 * 60 * 1000;   // 10 Minutes
 
 interface IWeeklyUptime {
   startDate: Date,
@@ -30,11 +31,11 @@ interface IWeeklyUptime {
 /**
  * Handles Uptime Command. Replies with last most recent
  *  uptime metric since LAST OFFLINE END
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_uptime(msg: Message, cmd: Command): Promise<any> {
-  return UserModel.find(msg.author.id)
+async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -44,7 +45,7 @@ async function command_uptime(msg: Message, cmd: Command): Promise<any> {
       const precenseLogs = (await PrecenseLogModel
         .where('userID', user.userID as string)
         .where('statusID', StatusType.offline.toString())
-        .orderBy('created_at', 'desc')
+        .orderBy('startTime', 'desc')
         .limit(1)
         .get()) as Model[];
       
@@ -67,11 +68,11 @@ async function command_uptime(msg: Message, cmd: Command): Promise<any> {
 /**
  * Handles Weekly Avg. Uptime Command. Replies with the average
  *  uptime for the week
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
-  return UserModel.find(msg.author.id)
+async function command_weekUptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -124,10 +125,10 @@ async function command_weekUptime(msg: Message, cmd: Command): Promise<any> {
 
 /**
  * Prints help menu for user
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_help(msg: Message, cmd: Command): Promise<any> {
+async function command_help(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   let initialMessage = `**Announcements**
     Follow Development at: https://github.com/Ciaxur/DiscordStat.bot
 
@@ -152,21 +153,21 @@ async function command_help(msg: Message, cmd: Command): Promise<any> {
 
 /**
  * Retrieves project Version, replying to sender
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_version(msg: Message, cmd: Command): Promise<any> {
+async function command_version(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   return msg.reply(`Version ${CONFIG.version}`);
 }
 
 /**
  * Prints the status of whether the user's data is
  *  being actively stored or not and total stored data
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_tracking_status(msg: Message, cmd: Command): Promise<any> {
-  return UserModel.find(msg.author.id)
+async function command_tracking_status(msg: DiscordenoMessage, cmd: Command): Promise<any> {
+  return UserModel.find(cmd.userId)
     .then(async (user) => {
       if (!user) {
         return msg.reply('No metrics stored for user');
@@ -189,10 +190,10 @@ async function command_tracking_status(msg: Message, cmd: Command): Promise<any>
 
 /**
  * Sets tracking status given by user
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
+async function command_tracking_set(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Expect direct argument to be [true/false]
   if (cmd.directArg === undefined || !['true', 'false'].includes(cmd.directArg.toLowerCase())) {
     return msg.reply(`Invalid command usage: Expecting argument to be passed \`${cmd.cmd} [true/false]\` `);
@@ -200,10 +201,10 @@ async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
 
   // Update Tracking Setting
   return UserModel
-    .where('userID', msg.author.id)
+    .where('userID', cmd.userId)
     .update('disableTracking', cmd.directArg.toLowerCase() === 'true' ? false : true)
     .then(() => {
-      Log.Internal('command_tracking_set', `User ${msg.author.id} Tracking Updated to ${cmd.directArg}`);
+      Log.Internal('command_tracking_set', `User ${cmd.userId} Tracking Updated to ${cmd.directArg}`);
       return msg.reply(`Tracking updated to: **${cmd.directArg.toLocaleLowerCase()}**`);
     })
     .catch(err => {
@@ -214,22 +215,22 @@ async function command_tracking_set(msg: Message, cmd: Command): Promise<any> {
 
 /**
  * Removes stored logs for user
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_clear_data(msg: Message, cmd: Command): Promise<any> {
+async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   return PrecenseLogModel
-    .where('userID', msg.author.id)
+    .where('userID', cmd.userId)
     .delete()
     .then(() => msg.reply('All logged data have been removed 😺'));
 }
 
 /**
  * Prints information for how to donate to this Bot
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_donate(msg: Message, cmd: Command): Promise<any> {
+async function command_donate(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   msg.send({
     embed: {
       title: 'Bot Donation ❤️',
@@ -244,10 +245,10 @@ async function command_donate(msg: Message, cmd: Command): Promise<any> {
 
 /**
  * Toggles bot tracking for a user
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
- async function command_toggle_bot_tracking(msg: Message, cmd: Command): Promise<any> {
+ async function command_toggle_bot_tracking(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Expect direct argument to be the user id
   if (cmd.directArg === undefined) {
     return msg.reply(`Invalid command usage: Expecting argument to be passed \`${cmd.cmd} [bot-id]\``);
@@ -273,15 +274,15 @@ async function command_donate(msg: Message, cmd: Command): Promise<any> {
   
   if (!botTrackEntry.length) {
     const uuid = v4.generate().split('-').pop();
-    const entry = await BotTrackerModel.create({
-      createdAt: new Date(),
+    await BotTrackerModel.create({
+      createdAt: new Date().toUTCString(),
       trackId: uuid,
       botId: cmd.directArg,
       userId: cmd.userId,
     } as any);
 
     Log.Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
-    return msg.reply(`Added bot tracking for bot '${cmd.directArg}`);
+    return msg.reply(`Added bot tracking for bot '${cmd.directArg}'`);
   }
 
   // Add/remove the user from the notification list of the bot (Toggle)
@@ -298,10 +299,10 @@ async function command_donate(msg: Message, cmd: Command): Promise<any> {
 
 /**
  * DMs a list for all bot tracking for a user
- * @param msg Message Object
+ * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_list_bot_tracking(msg: Message, cmd: Command): Promise<any> {
+async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   const botTrackEntries: (IBotTracker & ITimestamps)[] = await BotTrackerModel
     .where('userId', cmd.userId)
     .get() as any;
@@ -311,7 +312,7 @@ async function command_list_bot_tracking(msg: Message, cmd: Command): Promise<an
     
     for (const entry of botTrackEntries) {
       // Check if User info in Cache
-      let bot_user = USER_CACHE.get(entry.botId);
+      let bot_user = USER_DB_CACHE.get(entry.botId);
       if (!bot_user) {
         bot_user = (await UserModel.find(entry.botId)) as any;
         if (!bot_user) {
@@ -319,7 +320,7 @@ async function command_list_bot_tracking(msg: Message, cmd: Command): Promise<an
         }
         
         Log.Info(`Adding ${bot_user.userID} to User Cache`);
-        USER_CACHE.set(bot_user.userID, bot_user, USER_CACHE_TTIL);
+        USER_DB_CACHE.set(bot_user.userID, bot_user, USER_DB_CACHE_TTL);
       }
 
       // Append Information
@@ -327,7 +328,7 @@ async function command_list_bot_tracking(msg: Message, cmd: Command): Promise<an
       list_str += `- ${bot_user.username} [*${bot_user.userID}*]: tracked since ${tracking_started.str}\n`;
     }
 
-    sendDirectMessage(cmd.userId, list_str);
+    sendDirectMessage(BigInt(cmd.userId), list_str);
     return msg.reply(`You have ${botTrackEntries.length} Bots being tracked. I DM'ed you a detailed list`);
   } else {
     return msg.reply('You have no bots being tacked');
