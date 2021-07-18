@@ -57,8 +57,13 @@ deno run --allow-read --allow-write --allow-net --unstable ./src/main.ts
 ## Commands 🤖
 All commands should be prefixed with `!`.
 
-**User-Specific Commands**
+**General Commands**
 - `help`: Print the Help Menu
+- `donate`: Prints Bot instructions for donating
+- `version`: Prints Bot's current version
+- `info`: Prints bot information
+
+**User-Specific Commands**
 - `tracking-status`: Prints status of tracking enable/disable for user
 - `tracking-set [true/false]`: Sets tracking state given by user argument [true/false]
 - `toggle-bot-tracking`: Toggles user being notified of bot's status change. !toggle-bot-tracking [bot-id]
@@ -66,15 +71,13 @@ All commands should be prefixed with `!`.
 - `clear-data`: Clears all stored logs of user. (*No Confirmation is given*)
 - `uptime`: Prints User's most recent uptime
 - `week-uptime`: Prints User's uptime during the past 7 days
-- `donate`: Prints Bot instructions for donating
-- `version`: Prints Bot's current version
 
 **Server-Specific Commands**
 - `set-bot-channel`: Sets the Server Channel that the bot should respond to [owner only]
 - `show-bot-channel`: Sets the Server Channel that the bot should respond to
 - `clear-bot-channel`: Clears the Server Channel that the bot should respond to [owner only]
 - `server-interaction`: Prints the current server's user interaction with this bot
-- `info`: Prints bot information
+
 
 ## License 📔
 Licensed under the [MIT](LICENSE) License.
