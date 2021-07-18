@@ -1,4 +1,4 @@
-import { startBot, getUser } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { startBot, getUser } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import { 
@@ -46,14 +46,10 @@ startBot({
       // Message not from Server (Guild)
       if (msg.guildId === BigInt(0)) {
         Log.Info(`Message did not originate from a Guild. GuildID = ${msg.guildId}`);
-        return;
       }
 
-      // Guild Messages
-      else {
-        handleGuildMessage(msg)
-          .catch(err => Log.Error('Uncaught Exception <handleGuildMessage>: ', err));
-      }
+      handleGuildMessage(msg)
+        .catch(err => Log.Error('Uncaught Exception <handleGuildMessage>: ', err));
     },
 
     guildLoaded(guild) {

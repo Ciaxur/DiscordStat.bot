@@ -2,7 +2,7 @@
   Handles Guild State changes, database additions, and other Guild
     related utilities
 */
-import { Guild } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { Guild } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { GuildModel } from '../Database/index.ts';
 
 // Logging System

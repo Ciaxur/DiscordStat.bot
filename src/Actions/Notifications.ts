@@ -2,7 +2,7 @@
   Handles checking and then notifying another party
     of an occured event
 */
-import { sendDirectMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { sendDirectMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { PrecenseLogModel, BotTrackerModel } from '../Database/index.ts';
 import {
   IPrecenseLog, IUser, StatusType,
