@@ -1,4 +1,4 @@
-import * as Colors from 'https://deno.land/std@0.100.0/fmt/colors.ts';
+import * as Colors from 'https://deno.land/std@0.101.0/fmt/colors.ts';
 
 /** Singleton Logger Class */
 export default class Logger {

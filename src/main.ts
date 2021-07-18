@@ -1,4 +1,4 @@
-import { startBot, getUser } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { startBot, getUser } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import { 

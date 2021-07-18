@@ -1,4 +1,4 @@
-import { DiscordenoMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { DiscordenoMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildModel } from '../Database/index.ts';
 import { SERVER_COMMANDS, USER_COMMANDS } from './index.ts';
@@ -15,7 +15,7 @@ import CONFIG from '../config.ts';
   const totalGuilds = (await GuildModel.count()) || 0;
   
   return msg.send({
-    embed: {
+    embeds: [{
       title: 'Information',
       description: `Discord Statistics Bot that monitors user statistics on a server, with the end goal of a personalized User and Server Statistics Experience much like Spotify's Wrapped.
       Follow Development at: https://github.com/Ciaxur/DiscordStat.bot
@@ -25,7 +25,7 @@ import CONFIG from '../config.ts';
       footer: {
         text: `Version ${CONFIG.version}`,
       },
-    },
+    }],
   });
 }
 
@@ -42,7 +42,7 @@ async function command_help(msg: DiscordenoMessage, cmd: Command): Promise<any> 
   `;
 
   return msg.send({
-    embed: {
+    embeds: [{
       title: 'Help Menu',
       description: (
         // General Commands
@@ -57,7 +57,7 @@ async function command_help(msg: DiscordenoMessage, cmd: Command): Promise<any> 
         Object.entries(SERVER_COMMANDS)
           .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), '\n**Server-Specific Commands**\n')
       ),
-    },
+    }],
   });
 }
 
@@ -77,14 +77,14 @@ async function command_version(msg: DiscordenoMessage, cmd: Command): Promise<an
  */
 async function command_donate(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   msg.send({
-    embed: {
+    embeds: [{
       title: 'Bot Donation ❤️',
       image: {
         url: 'https://ethereum.org/static/a110735dade3f354a46fc2446cd52476/0ee04/eth-home-icon.png',
       },
       description: `Donating helps support the development of this bot in the form of future decentralized currency :).
         - **Ethereum**: 0x1281AD6ce28FD668cf42Ea369ba19413515bD025`
-    },
+    }],
   })
 }
 

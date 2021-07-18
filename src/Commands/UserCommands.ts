@@ -1,5 +1,5 @@
-import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
-import { DiscordenoMessage, sendDirectMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
+import { DiscordenoMessage, sendDirectMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { IPrecenseLog, IUser, IBotTracker, ITimestamps } from '../Interfaces/Database.ts';
@@ -140,11 +140,11 @@ async function command_tracking_status(msg: DiscordenoMessage, cmd: Command): Pr
         .get()) as Model[];
 
       return msg.reply({
-        embed: {
+        embeds: [{
           title: 'User Tracking Status',
           description: `**Tracking Status**: ${(user as any as IUser).disableTracking ? 'Disabled' : 'Enabled'}
             **Total Logs Stored:** ${precenseLogs.length}`
-        },
+        }],
       });
     });
 }

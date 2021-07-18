@@ -1,4 +1,4 @@
-import { DiscordenoMessage } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { DiscordenoMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { CMD_ORIGIN } from '../Commands/index.ts';
 
 export interface CommandMap {

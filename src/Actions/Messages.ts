@@ -4,8 +4,8 @@
 import { 
   getUser, getGuild,
   DiscordenoMessage, User,
-} from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
-import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
+} from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
+import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
 
 // Database & Utilities
 import { GuildModel, GuildActivityModel } from '../Database/index.ts'

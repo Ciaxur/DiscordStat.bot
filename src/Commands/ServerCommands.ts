@@ -1,4 +1,4 @@
-import { DiscordenoMessage, getGuild } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { DiscordenoMessage, getGuild } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildActivityModel, GuildModel } from '../Database/index.ts';
 import { IGuildActivity, IGuild } from '../Interfaces/Database.ts';
@@ -32,15 +32,15 @@ async function command_server_interaction(msg: DiscordenoMessage, cmd: Command):
       }
     ), {} as { [cmd: string]: number });
 
-  
+
   let initialMessage = '**Total Commands Issued**:\n';
   return msg.send({
-    embed: {
+    embeds: [{
       title: `${guildEntry.guildName} - Bot Interaction`,
       description: Object
         .entries(resultTable)
         .reduce((msg, [key, val]) => msg + `- ${key}: ${val}\n`, initialMessage)
-    },
+    }],
   })
 }
 

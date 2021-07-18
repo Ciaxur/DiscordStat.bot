@@ -2,9 +2,9 @@
   Handles Presence changes and modifications
 */
 
-import { PresenceUpdate } from 'https://deno.land/x/discordeno@11.2.0/mod.ts';
+import { PresenceUpdate } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
-import { v4 } from 'https://deno.land/std@0.100.0/uuid/mod.ts';
+import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
 
 // Database & Utils
 import { Cache } from '../Helpers/Cache.ts';
