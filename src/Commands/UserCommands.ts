@@ -8,8 +8,6 @@ import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel, BotTrackerModel } from '../Database/index.ts';
 import { ITimeDifference } from '../Helpers/utils.ts';
 import { Cache } from '../Helpers/Cache.ts';
-import { SERVER_COMMANDS } from './ServerCommands.ts';
-import CONFIG from '../config.ts';
 import Logger from '../Logging/index.ts';
 
 // SHARED CACHE
@@ -124,43 +122,6 @@ async function command_weekUptime(msg: DiscordenoMessage, cmd: Command): Promise
 }
 
 /**
- * Prints help menu for user
- * @param msg DiscordenoMessage Object
- * @param cmd Parsed Command Object
- */
-async function command_help(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  let initialMessage = `**Announcements**
-    Follow Development at: https://github.com/Ciaxur/DiscordStat.bot
-
-    **User-Specific Commands**
-  `;
-  
-  return msg.send({
-    embed: {
-      title: 'Help Menu',
-      description: (
-        // User Commands
-        Object.entries(USER_COMMANDS)
-          .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), initialMessage) +
-
-        // Server Commands
-        Object.entries(SERVER_COMMANDS)
-          .reduce((acc, [key, val]) => (acc + `- **${key}**: ${val.description}\n`), '\n**Server-Specific Commands**\n')
-      ),
-    },
-  });
-}
-
-/**
- * Retrieves project Version, replying to sender
- * @param msg DiscordenoMessage Object
- * @param cmd Parsed Command Object
- */
-async function command_version(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return msg.reply(`Version ${CONFIG.version}`);
-}
-
-/**
  * Prints the status of whether the user's data is
  *  being actively stored or not and total stored data
  * @param msg DiscordenoMessage Object
@@ -223,24 +184,6 @@ async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise
     .where('userID', cmd.userId)
     .delete()
     .then(() => msg.reply('All logged data have been removed 😺'));
-}
-
-/**
- * Prints information for how to donate to this Bot
- * @param msg DiscordenoMessage Object
- * @param cmd Parsed Command Object
- */
-async function command_donate(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  msg.send({
-    embed: {
-      title: 'Bot Donation ❤️',
-      image: {
-        url: 'https://ethereum.org/static/a110735dade3f354a46fc2446cd52476/0ee04/eth-home-icon.png',
-      },
-      description: `Donating helps support the development of this bot in the form of future decentralized currency :).
-        - **Ethereum**: 0x1281AD6ce28FD668cf42Ea369ba19413515bD025`
-    },
-  })
 }
 
 /**
@@ -337,10 +280,6 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
 
 
 export const USER_COMMANDS: CommandMap = {
-  'help': {
-    exec: command_help,
-    description: 'Print the Help Menu',
-  },
   'tracking-status': {
     exec: command_tracking_status,
     description: 'Prints status of tracking enable/disable for user',
@@ -369,12 +308,4 @@ export const USER_COMMANDS: CommandMap = {
     exec: command_weekUptime,
     description: 'Prints User\'s uptime during the past 7 days',
   },
-  'donate': {
-    exec: command_donate,
-    description: 'Prints Bot instructions for donating',
-  },
-  'version': {
-    exec: command_version,
-    description: 'Prints Bot\'s current version',
-  }
 };
