@@ -46,14 +46,10 @@ startBot({
       // Message not from Server (Guild)
       if (msg.guildId === BigInt(0)) {
         Log.Info(`Message did not originate from a Guild. GuildID = ${msg.guildId}`);
-        return;
       }
 
-      // Guild Messages
-      else {
-        handleGuildMessage(msg)
-          .catch(err => Log.Error('Uncaught Exception <handleGuildMessage>: ', err));
-      }
+      handleGuildMessage(msg)
+        .catch(err => Log.Error('Uncaught Exception <handleGuildMessage>: ', err));
     },
 
     guildLoaded(guild) {
