@@ -5,6 +5,8 @@ export { DatabaseInterface, CommandInterface };
 
 // Expected Environment Variables
 export interface IEnvironment {
+  ALERT_DISCORD_IDS: string,
+  
   BOT_TOKEN:  string,
   PSQL_USER:  string,
   PSQL_PSWD:  string,

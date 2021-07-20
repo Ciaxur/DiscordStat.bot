@@ -1,4 +1,4 @@
-import { startBot, getUser } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
+import { startBot, getUser, botId } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
 import { 
@@ -18,6 +18,25 @@ const Log = Logger.getInstance();
 // Load in Environment Variables
 Log.Print('Loading Environment Variables...');
 const env: IEnvironment = config() as any;
+
+// Setup Alert System for Discord User IDs
+import AlertSystem, { parseEnvironmentUserIds } from './Actions/Alert.ts';
+const parsed = parseEnvironmentUserIds(env.ALERT_DISCORD_IDS);
+const alertSystem = new AlertSystem(parsed);
+console.log('Alert Discord IDs Parsed:', parsed);
+
+Log.setErrorMessageHook(err => {    // Setup Log Message Hook
+  alertSystem.broadcastAlert({
+    embeds: [{
+      title: 'Alert System Broadcast',
+      description: err,
+      footer: {
+        text: `Timestamp: ${Date.now()}`,
+      },
+    }],
+  })
+    .catch(err => Log.Error(err));
+});
 
 // Database Connetion Init
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
