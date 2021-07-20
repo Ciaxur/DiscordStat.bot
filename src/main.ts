@@ -40,8 +40,8 @@ startBot({
     },
 
     messageCreate(msg) {
-      // Handle Gateway Readiness
-      if (!gatewayReady) return;
+      // Handle Gateway Readiness or Message from Self
+      if (!gatewayReady || msg.authorId === botId) return;
 
       // Message not from Server (Guild)
       if (msg.guildId === BigInt(0)) {
