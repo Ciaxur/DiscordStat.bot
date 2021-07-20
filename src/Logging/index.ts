@@ -4,6 +4,15 @@ import * as Colors from 'https://deno.land/std@0.101.0/fmt/colors.ts';
 export default class Logger {
   private static instance: Logger;
 
+  // Message Hooks
+  private errorMsgHook: null | ((err: string) => void) = null;
+  private InfoMsgHook: null | ((err: string) => void) = null;
+  private WarningMsgHook: null | ((err: string) => void) = null;
+  private DebugMsgHook: null | ((err: string) => void) = null;
+  private InternalMsgHook: null | ((err: string) => void) = null;
+  private PrintMsgHook: null | ((err: string) => void) = null;
+
+
   private constructor() {}
 
   static getInstance(): Logger {
@@ -19,6 +28,9 @@ export default class Logger {
    */
   public Error(str: string, ...vars: any[]): void {
     this.print(str, 0xCC2010, ...vars);
+
+    // Call Message Hook
+    if (this.errorMsgHook) this.errorMsgHook(str + vars.join(' '));
   }
 
   /**
@@ -28,6 +40,9 @@ export default class Logger {
    */
   public Info(str: string, ...vars: any[]): void {
     this.print(str, 0x20C97D, ...vars);
+
+    // Call Message Hook
+    if (this.InfoMsgHook) this.InfoMsgHook(str + vars.join(' '));
   }
 
   /**
@@ -37,6 +52,9 @@ export default class Logger {
    */
   public Warning(str: string, ...vars: any[]): void {
     this.print(str, 0xF2A71B, ...vars);
+
+    // Call Message Hook
+    if (this.WarningMsgHook) this.WarningMsgHook(str + vars.join(' '));
   }
 
   /**
@@ -46,6 +64,9 @@ export default class Logger {
    */
   public Print(str: string, ...vars: any[]): void {
     this.print(str, 0xF2F0D0, ...vars);
+
+    // Call Message Hook
+    if (this.PrintMsgHook) this.PrintMsgHook(str + vars.join(' '));
   }
 
   /**
@@ -55,6 +76,9 @@ export default class Logger {
    */
   public Debug(str: string, ...vars: any[]): void {
     this.print(str, 0xF24987, ...vars);
+
+    // Call Message Hook
+    if (this.DebugMsgHook) this.DebugMsgHook(str + vars.join(' '));
   }
 
   /**
@@ -64,6 +88,18 @@ export default class Logger {
    */
   public Internal(fn_name: string, str: string, ...vars: any[]): void {
     this.print(`<${fn_name}> - ${str}`, 0xF27405, ...vars);
+    
+    // Call Message Hook
+    if (this.InternalMsgHook) this.InternalMsgHook(`<${fn_name}> - ${str}` + vars.join(' '));
+  }
+
+  /**
+   * Sets a Message Function Hook that will be called
+   *  after Error gets logged
+   * @param fn Function to call
+   */
+  public setErrorMessageHook(fn: (err: string) => void) {
+    this.errorMsgHook = fn;
   }
 
   private print(str: string, color: number, ...vars: any[]): void {
