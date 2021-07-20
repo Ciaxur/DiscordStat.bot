@@ -4,6 +4,7 @@ cd $(dirname $0)
 docker run --rm \
   --net host \
   -v "$(pwd):/app" \
+  -v "$HOME/.cache/deno:/deno-dir" \
   -w "/app" \
   -l deno_discordBot \
   "$@" \
