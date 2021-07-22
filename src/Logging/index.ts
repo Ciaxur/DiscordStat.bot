@@ -1,16 +1,20 @@
 import * as Colors from 'https://deno.land/std@0.101.0/fmt/colors.ts';
 
+// Hook Definitino
+type LogHook = (msg: string) => void;
+type LogType = 'error' | 'info' | 'warning' | 'print' | 'debug' | 'internal';
+
 /** Singleton Logger Class */
 export default class Logger {
   private static instance: Logger;
 
   // Message Hooks
-  private errorMsgHook: null | ((err: string) => void) = null;
-  private InfoMsgHook: null | ((err: string) => void) = null;
-  private WarningMsgHook: null | ((err: string) => void) = null;
-  private DebugMsgHook: null | ((err: string) => void) = null;
-  private InternalMsgHook: null | ((err: string) => void) = null;
-  private PrintMsgHook: null | ((err: string) => void) = null;
+  private errorMsgHooks:     LogHook[] = [];
+  private infoMsgHooks:      LogHook[] = [];
+  private warningMsgHooks:   LogHook[] = [];
+  private debugMsgHooks:     LogHook[] = [];
+  private internalMsgHooks:  LogHook[] = [];
+  private printMsgHooks:     LogHook[] = [];
 
 
   private constructor() {}
@@ -29,8 +33,8 @@ export default class Logger {
   public Error(str: string, ...vars: any[]): void {
     this.print(str, 0xCC2010, ...vars);
 
-    // Call Message Hook
-    if (this.errorMsgHook) this.errorMsgHook(str + vars.join(' '));
+    // Call Message Hooks
+    this.errorMsgHooks.forEach(hook => hook(str + vars.join(' ')));
   }
 
   /**
@@ -41,8 +45,8 @@ export default class Logger {
   public Info(str: string, ...vars: any[]): void {
     this.print(str, 0x20C97D, ...vars);
 
-    // Call Message Hook
-    if (this.InfoMsgHook) this.InfoMsgHook(str + vars.join(' '));
+    // Call Message Hooks
+    this.infoMsgHooks.forEach(hook => hook(str + vars.join(' ')));
   }
 
   /**
@@ -53,8 +57,8 @@ export default class Logger {
   public Warning(str: string, ...vars: any[]): void {
     this.print(str, 0xF2A71B, ...vars);
 
-    // Call Message Hook
-    if (this.WarningMsgHook) this.WarningMsgHook(str + vars.join(' '));
+    // Call Message Hooks
+    this.warningMsgHooks.forEach(hook => hook(str + vars.join(' ')));
   }
 
   /**
@@ -65,8 +69,8 @@ export default class Logger {
   public Print(str: string, ...vars: any[]): void {
     this.print(str, 0xF2F0D0, ...vars);
 
-    // Call Message Hook
-    if (this.PrintMsgHook) this.PrintMsgHook(str + vars.join(' '));
+    // Call Message Hooks
+    this.printMsgHooks.forEach(hook => hook(str + vars.join(' ')));
   }
 
   /**
@@ -78,7 +82,7 @@ export default class Logger {
     this.print(str, 0xF24987, ...vars);
 
     // Call Message Hook
-    if (this.DebugMsgHook) this.DebugMsgHook(str + vars.join(' '));
+    this.debugMsgHooks.forEach(hook => hook(str + vars.join(' ')));
   }
 
   /**
@@ -90,16 +94,36 @@ export default class Logger {
     this.print(`<${fn_name}> - ${str}`, 0xF27405, ...vars);
     
     // Call Message Hook
-    if (this.InternalMsgHook) this.InternalMsgHook(`<${fn_name}> - ${str}` + vars.join(' '));
+    this.internalMsgHooks.forEach(hook => hook(`<${fn_name}> - ${str}` + vars.join(' ')));
   }
 
   /**
-   * Sets a Message Function Hook that will be called
-   *  after Error gets logged
-   * @param fn Function to call
+   * Adds a Message Function Hook that will be called
+   *  after the Type of Log gets logged
+   * @param hookType Type of Hook to add
+   * @param fn Function to add
    */
-  public setErrorMessageHook(fn: (err: string) => void) {
-    this.errorMsgHook = fn;
+  public addMessageHook(fn: LogHook, type: LogType) {
+    switch(type) {
+      case 'debug':
+        this.debugMsgHooks.push(fn);
+        break;
+      case 'error':
+        this.errorMsgHooks.push(fn);
+        break;
+      case 'info':
+        this.infoMsgHooks.push(fn);
+        break;
+      case 'internal':
+        this.internalMsgHooks.push(fn);
+        break;
+      case 'print':
+        this.printMsgHooks.push(fn);
+        break;
+      case 'warning':
+        this.warningMsgHooks.push(fn);
+        break;
+    }
   }
 
   private print(str: string, color: number, ...vars: any[]): void {

@@ -25,7 +25,7 @@ const parsed = parseEnvironmentUserIds(env.ALERT_DISCORD_IDS);
 const alertSystem = new AlertSystem(parsed);
 console.log('Alert Discord IDs Parsed:', parsed);
 
-Log.setErrorMessageHook(err => {    // Setup Log Message Hook
+Log.addMessageHook(err => {    // Setup Log Message Hook
   alertSystem.broadcastAlert({
     embeds: [{
       title: 'Alert System Broadcast',
@@ -36,7 +36,7 @@ Log.setErrorMessageHook(err => {    // Setup Log Message Hook
     }],
   })
     .catch(err => Log.Error(err));
-});
+}, 'error');
 
 // Database Connetion Init
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
