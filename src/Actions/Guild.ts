@@ -16,7 +16,7 @@ const Log = Logger.getInstance();
 export async function addGuild(guild: Guild) {
   // Store Guild Entry
   return GuildModel.create({
-    guildID: guild.id,
+    guildID: guild.id.toString(),
     guildName: guild.name,
     responseChannel: null,
   })

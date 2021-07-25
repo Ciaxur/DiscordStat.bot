@@ -50,13 +50,11 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
         // Make sure Guild is stored in DB
         const guild_entry = await GuildModel.where('guildID', msg.guildId.toString()).get();
         if (!guild_entry.length) {
-          Log.Error('Guild ID not found: ', msg.guildId);
+          Log.Warning('Guild ID not found: ', msg.guildId);
           const guild = await getGuild(msg.guildId);
           GUILD_CACHE.set(msg.guildId.toString(), guild as any, GUILD_CACHE_TTL);
           await addGuild(guild as any);
           cached_guild = guild as any;
-
-
         } else {
           GUILD_CACHE.set(msg.guildId.toString(), (guild_entry as any)[0], GUILD_CACHE_TTL);
           cached_guild = (guild_entry as any)[0];
@@ -68,7 +66,7 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
   }
 
   // Handle message only in verified channels
-  if (isFromDirectMessage || cached_guild?.responseChannel === null || channel?.name === cached_guild?.responseChannel) {
+  if (isFromDirectMessage || (cached_guild?.responseChannel === null || cached_guild?.responseChannel === undefined) || channel?.name === cached_guild?.responseChannel) {
     // Extract/Confirm Valid Command
     if (content.startsWith('!')) {
       Log.Info(`${author.username} issued command: ${content}`);
