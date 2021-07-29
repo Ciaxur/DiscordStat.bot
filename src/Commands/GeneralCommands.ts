@@ -2,7 +2,7 @@ import { DiscordenoMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts'
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildModel } from '../Database/index.ts';
 import { SERVER_COMMANDS, USER_COMMANDS } from './index.ts';
-import Configuration from '../config.ts';
+import Configuration from '../Configuration/index.ts';
 const CONFIG = Configuration.getInstance();
 
 

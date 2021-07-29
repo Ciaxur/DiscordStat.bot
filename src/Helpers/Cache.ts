@@ -5,7 +5,7 @@ import { User } from "https://deno.land/x/discordeno@12.0.1/src/types/users/user
 import { IUser, IGuild } from '../Interfaces/Database.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
-import Config from '../config.ts';
+import Config from '../Configuration/index.ts';
 const config = Config.getInstance();
 
 

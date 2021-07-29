@@ -1,9 +1,9 @@
-import { IConfiguration } from './Interfaces/Configuration.ts';
-import Log from './Logging/index.ts';
+import { IConfiguration } from '../Interfaces/Configuration.ts';
+import Log from '../Logging/index.ts';
 const log = Log.getInstance();
 
 // Project Configuration
-const CONFIG_FILE = new URL('./Data/config.json', import.meta.url).pathname;
+const CONFIG_FILE = new URL('../config.json', import.meta.url).pathname;
 const COOLDOWN_TIME = 1000;   // 1s Cooldown
 
 
@@ -31,6 +31,7 @@ class Configuration { // Singleton
   private static instance: Configuration;
   public config: IConfiguration = EMPTY_CONFIG;
 
+
   private constructor () {
     this.update();
     this.startWatcher();
@@ -54,7 +55,7 @@ class Configuration { // Singleton
       }
     }
   }
-  
+
   /**
    * Creates (if not avialable) and returns the instance
    * @returns Configuration Instance
