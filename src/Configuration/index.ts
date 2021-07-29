@@ -27,7 +27,7 @@ const EMPTY_CONFIG: IConfiguration = {
 
 type ConfigurationHooks = 'update';
 
-class Configuration { // Singleton
+export class Configuration { // Singleton
   private static instance: Configuration;
   public config: IConfiguration = EMPTY_CONFIG;
 
