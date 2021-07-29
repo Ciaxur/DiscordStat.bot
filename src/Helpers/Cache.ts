@@ -35,7 +35,7 @@ export class Cache<T> {
    */
   constructor(softLimit: number, hardLimit = -1, enableAutoSizeScale = false) {
     this._softCacheLimit = softLimit > 0 ? softLimit : 1;
-    this._hardCacheLimit = this._softCacheLimit;
+    this._hardCacheLimit = hardLimit !== -1 ? hardLimit : this._softCacheLimit;
     this._maxCacheSize = hardLimit !== -1 ? hardLimit : this._softCacheLimit;
     this.enableAutoSizeScale = enableAutoSizeScale;
     this._cached_data = {};

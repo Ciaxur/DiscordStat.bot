@@ -38,7 +38,11 @@ Log.addMessageHook(err => {    // Setup Log Message Hook
     .catch(err => Log.Error(err));
 }, 'error');
 
-// Database Connetion Init
+// Setup Configuration Hooks
+import { initHooks } from './Configuration/Hooks.ts';
+initHooks();
+
+// Database Connection Init
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
