@@ -5,6 +5,8 @@ import { User } from "https://deno.land/x/discordeno@12.0.1/src/types/users/user
 import { IUser, IGuild } from '../Interfaces/Database.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
+import Config from '../config.ts';
+const config = Config.getInstance();
 
 
 export interface ICacheData<T> {
@@ -216,15 +218,27 @@ export class Cache<T> {
 
 
 // SHARED CACHE OBJECTS
-export const GUILD_CACHE = new Cache<IGuild>(5);
+export const GUILD_CACHE = new Cache<IGuild>(
+  config.config.cache.guild.softCacheLimit,
+  config.config.cache.guild.hardCacheLimit || -1,
+  config.config.cache.guild.enableAutoScaling,
+);
 export const GUILD_CACHE_TTL = 24 * 60 * 60 * 1000;         // 24 Hours
 
 // cache from db
-export const USER_DB_CACHE = new Cache<IUser>(100);
+export const USER_DB_CACHE = new Cache<IUser>(
+  config.config.cache.userDB.softCacheLimit,
+  config.config.cache.userDB.hardCacheLimit || -1,
+  config.config.cache.userDB.enableAutoScaling,
+);
 export const USER_DB_CACHE_TTL  = 10 * 60 * 1000;           // 10 Minutes
 
 // cache from Discord API
-export const USER_DISCORD_CACHE = new Cache<User>(100);
+export const USER_DISCORD_CACHE = new Cache<User>(
+  config.config.cache.userDiscord.softCacheLimit,
+  config.config.cache.userDiscord.hardCacheLimit || -1,
+  config.config.cache.userDiscord.enableAutoScaling,
+);
 export const USER_DISCORD_CACHE_TTL  = 10 * 60 * 1000;      // 10 Minutes
 
 // User Presence being Handled
@@ -232,5 +246,9 @@ export const USER_DISCORD_CACHE_TTL  = 10 * 60 * 1000;      // 10 Minutes
 //    be present in multiple servers where the bot is,
 //    create a "Presence Cache" that has a TTL which is the
 //    delay of presence update.
-export const PRESENCE_DELAY_CACHE = new Cache<IUser>(10);
+export const PRESENCE_DELAY_CACHE = new Cache<IUser>(
+  config.config.cache.presenceDB.softCacheLimit,
+  config.config.cache.presenceDB.hardCacheLimit || -1,
+  config.config.cache.presenceDB.enableAutoScaling,
+);
 export const PRECENSE_DELAY_TTL = 500;                      // 500ms Delay

@@ -1,3 +1,4 @@
+import { IConfiguration } from './Interfaces/Configuration.ts';
 import Log from './Logging/index.ts';
 const log = Log.getInstance();
 
@@ -5,16 +6,30 @@ const log = Log.getInstance();
 const CONFIG_FILE = new URL('./Data/config.json', import.meta.url).pathname;
 const COOLDOWN_TIME = 1000;   // 1s Cooldown
 
-interface IConfig {
-  version: string,
-}
-const EMPTY_CONFIG: IConfig = {
+
+const EMPTY_CONFIG: IConfiguration = {
   version: "0.0.0",
+  cache: {
+    guild: {
+      softCacheLimit: 5,
+    },
+    presenceDB: {
+      softCacheLimit: 5,
+    },
+    userDB: {
+      softCacheLimit: 5,
+    },
+    userDiscord: {
+      softCacheLimit: 5,
+    },
+  }
 }
+
+type ConfigurationHooks = 'update';
 
 class Configuration { // Singleton
   private static instance: Configuration;
-  public config: IConfig = EMPTY_CONFIG;
+  public config: IConfiguration = EMPTY_CONFIG;
 
   private constructor () {
     this.update();

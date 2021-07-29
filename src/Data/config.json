@@ -1,3 +1,25 @@
 {
-  "version": "1.7.4-dev"
+  "version": "1.7.4-dev",
+  "cache": {
+    "guild": {
+      "softCacheLimit": 5,
+      "hardCacheLimit": 10,
+      "enableAutoScaling": true
+    },
+    "userDB": {
+      "softCacheLimit": 100,
+      "hardCacheLimit": 10000,
+      "enableAutoScaling": false
+    },
+    "userDiscord": {
+      "softCacheLimit": 100,
+      "hardCacheLimit": 10000,
+      "enableAutoScaling": false
+    },
+    "presenceDB": {
+      "softCacheLimit": 100,
+      "hardCacheLimit": 5000,
+      "enableAutoScaling": false
+    }
+  }
 }
