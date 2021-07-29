@@ -182,3 +182,11 @@ export const USER_DB_CACHE_TTL  = 10 * 60 * 1000;           // 10 Minutes
 // cache from Discord API
 export const USER_DISCORD_CACHE = new Cache<User>(100);
 export const USER_DISCORD_CACHE_TTL  = 10 * 60 * 1000;      // 10 Minutes
+
+// User Presence being Handled
+//  NOTE: To prevent multiple entries since user could
+//    be present in multiple servers where the bot is,
+//    create a "Presence Cache" that has a TTL which is the
+//    delay of presence update.
+export const PRESENCE_DELAY_CACHE = new Cache<IUser>(10);
+export const PRECENSE_DELAY_TTL = 500;                      // 500ms Delay

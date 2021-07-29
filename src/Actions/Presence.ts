@@ -7,7 +7,7 @@ import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
 
 // Database & Utils
-import { Cache } from '../Helpers/Cache.ts';
+import { PRECENSE_DELAY_TTL, PRESENCE_DELAY_CACHE } from '../Helpers/Cache.ts';
 import { PrecenseLogModel } from '../Database/index.ts';
 import { IPrecenseLog, IUser, StatusType } from '../Interfaces/Database.ts';
 import { statusEnumFromString } from '../Helpers/utils.ts';
@@ -16,13 +16,7 @@ import { statusEnumFromString } from '../Helpers/utils.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
 
-// User Presence being Handled
-//  NOTE: To preven multiple entries since user could
-//    be present in multiple servers where the bot is,
-//    create a "Presence Cache" that has a TTL which is the
-//    delay of presence update.
-const PRESENCE_DELAY_CACHE = new Cache<IUser>(10);
-const PRECENSE_DELAY_TTL = 500;                // 500ms Delay
+
 
 /**
  * Handles updating User Presence on Database
