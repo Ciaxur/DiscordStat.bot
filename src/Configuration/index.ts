@@ -31,6 +31,9 @@ export class Configuration { // Singleton
   private static instance: Configuration;
   public config: IConfiguration = EMPTY_CONFIG;
 
+  // HOOKS
+  private updateHooks: (() => void)[] = [];
+  
 
   private constructor () {
     this.update();
@@ -57,6 +60,13 @@ export class Configuration { // Singleton
   }
 
   /**
+   * Runs hooks to notify configuration was modified
+   */
+  private async notifyUpdateHooks() {
+    this.updateHooks.forEach(fn => fn());
+  }
+  
+  /**
    * Creates (if not avialable) and returns the instance
    * @returns Configuration Instance
    */
@@ -74,8 +84,23 @@ export class Configuration { // Singleton
     try {
       this.config = JSON.parse(Deno.readTextFileSync(CONFIG_FILE));
       log.Internal('Configuration.update', 'Configuration updated');
+
+      this.notifyUpdateHooks();
     } catch(e) {
       log.Error('Configuration could not parse JSON config file');
+    }
+  }
+
+  /**
+   * Adds an event hook
+   * @param eventType Type of event to add hook to
+   */
+  public on(eventType: ConfigurationHooks, hookFn: () => void): void {
+    log.Internal('Configuration.on', `Add hook to event ${eventType}`);
+    switch(eventType) {
+      case 'update':
+        this.updateHooks.push(hookFn);
+        break;
     }
   }
 };
