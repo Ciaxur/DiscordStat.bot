@@ -15,6 +15,10 @@ import { handleGuildMessage } from './Actions/Messages.ts';
 import Logger from './Logging/index.ts';
 const Log = Logger.getInstance();
 
+// Log setup from Configuration
+import Configuration from './Configuration/index.ts';
+Log.logLevel = Configuration.getInstance().config.logging.level;
+
 // Load in Environment Variables
 Log.Print('Loading Environment Variables...');
 const env: IEnvironment = config() as any;

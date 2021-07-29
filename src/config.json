@@ -1,5 +1,8 @@
 {
   "version": "1.7.4-dev",
+  "logging": {
+    "level": 1
+  },
   "cache": {
     "guild": {
       "softCacheLimit": 5,

@@ -1,6 +1,6 @@
 import { IConfiguration } from '../Interfaces/Configuration.ts';
-import Log from '../Logging/index.ts';
-const log = Log.getInstance();
+import Logger from '../Logging/index.ts';
+const log = Logger.getInstance();
 
 // Project Configuration
 const CONFIG_FILE = new URL('../config.json', import.meta.url).pathname;
@@ -9,6 +9,9 @@ const COOLDOWN_TIME = 1000;   // 1s Cooldown
 
 const EMPTY_CONFIG: IConfiguration = {
   version: "0.0.0",
+  logging: {
+    level: 1,
+  },
   cache: {
     guild: {
       softCacheLimit: 5,

@@ -13,6 +13,17 @@ import {
 export async function initHooks() {
   log.Internal('Configuration Hooks', 'Initalizing Configuration Hooks');
   initCacheHooks();
+  initLoggingHooks();
+}
+
+async function initLoggingHooks() {
+  log.Internal('Configuration Logging Hooks', 'Initalizing Logging Configuration Hooks');
+
+  config.on('update', () => {
+    if (log.logLevel !== config.config.logging.level) {
+      log.logLevel = config.config.logging.level;
+    }
+  });
 }
 
 async function initCacheHooks() {
