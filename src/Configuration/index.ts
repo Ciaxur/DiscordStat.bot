@@ -23,6 +23,9 @@ const EMPTY_CONFIG: IConfiguration = {
     presenceDelay: {
       softCacheLimit: 5,
     },
+    botNotifyDelay: {
+      softCacheLimit: 5,
+    },
     userDB: {
       softCacheLimit: 5,
     },

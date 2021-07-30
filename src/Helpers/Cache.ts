@@ -253,6 +253,14 @@ export const PRESENCE_DELAY_CACHE = new Cache<IUser>(
 );
 export const PRECENSE_DELAY_TTL = 1000;                      // 1s Delay
 
+export const BOT_NOTIFY_DELAY_CACHE = new Cache<IUser>(
+  config.config.cache.presenceDelay.softCacheLimit,
+  config.config.cache.presenceDelay.hardCacheLimit || -1,
+  config.config.cache.presenceDelay.enableAutoScaling,
+);
+export const BOT_NOTIFY_DELAY_TTL = 500;                      // 500ms Delay
+
+
 // User Precense entries to prevent constant database calls
 export const PRESENCE_ENTRY_CACHE = new Cache<IPrecenseLog>(
   config.config.cache.presenceDB.softCacheLimit,

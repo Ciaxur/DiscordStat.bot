@@ -85,7 +85,6 @@ startBot({
           Log.Error(errorMsg, err);
           Log.ErrorDump(errorMsg, err, msg);
         });
-      return;
     },
 
     guildLoaded(guild) {

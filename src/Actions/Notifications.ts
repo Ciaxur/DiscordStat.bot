@@ -15,7 +15,10 @@ import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
 
 // Cache System
-import { PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE } from '../Helpers/Cache.ts';
+import { 
+  PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE,
+  BOT_NOTIFY_DELAY_CACHE, BOT_NOTIFY_DELAY_TTL,
+} from '../Helpers/Cache.ts';
 
 /**
  * Handles checking if a Bot's Presence State changes and notifies
@@ -24,6 +27,9 @@ import { PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE } from '../Helpers/Cache.ts';
  * @param newPresence New Presence (online, dnd, idle, invisible)
  */
 export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
+  if (BOT_NOTIFY_DELAY_CACHE.get(botUser.userID)) return;
+  else BOT_NOTIFY_DELAY_CACHE.set(botUser.userID, botUser, BOT_NOTIFY_DELAY_TTL);
+  
   Log.level(2).Internal('checkAndNotifyBotTracking', 'Checking if should notifying users of bot presence change');
 
   // Check Cache

@@ -6,6 +6,7 @@ const Log = Logger.getInstance();
 
 import {
   GUILD_CACHE, PRESENCE_DELAY_CACHE, 
+  BOT_NOTIFY_DELAY_CACHE,
   USER_DB_CACHE, USER_DISCORD_CACHE,
 } from '../Helpers/Cache.ts';
 
@@ -41,6 +42,21 @@ async function initCacheHooks() {
     // Auto-Scaling Updated
     if (presense_config.enableAutoScaling !== undefined && presense_config.enableAutoScaling !== PRESENCE_DELAY_CACHE.autoSizeScaling) {
       PRESENCE_DELAY_CACHE.autoSizeScaling = presense_config.enableAutoScaling;
+    }
+  });
+
+  // BOT NOTIFY DELAY CONFIG
+  config.on('update', () => {
+    const bot_notify_config = config.config.cache.botNotifyDelay;
+  
+    // Hard Limit changed ONLY IF auto-scaling was off
+    if (bot_notify_config.enableAutoScaling !== true && bot_notify_config.hardCacheLimit !== undefined && bot_notify_config.hardCacheLimit !== BOT_NOTIFY_DELAY_CACHE.hardCacheLimit) {
+      BOT_NOTIFY_DELAY_CACHE.hardCacheLimit = bot_notify_config.hardCacheLimit;
+    }
+  
+    // Auto-Scaling Updated
+    if (bot_notify_config.enableAutoScaling !== undefined && bot_notify_config.enableAutoScaling !== BOT_NOTIFY_DELAY_CACHE.autoSizeScaling) {
+      BOT_NOTIFY_DELAY_CACHE.autoSizeScaling = bot_notify_config.enableAutoScaling;
     }
   });
 

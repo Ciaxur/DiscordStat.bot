@@ -15,6 +15,7 @@ export interface IConfiguration {
     userDB:         ICacheConfig,
     userDiscord:    ICacheConfig,
     presenceDelay:  ICacheConfig,
+    botNotifyDelay: ICacheConfig,
     presenceDB:     ICacheConfig,
   }
 }

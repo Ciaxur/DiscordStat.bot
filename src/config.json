@@ -25,6 +25,11 @@
       "hardCacheLimit": 1000,
       "enableAutoScaling": false
     },
+    "botNotifyDelay": {
+      "softCacheLimit": 100,
+      "hardCacheLimit": 500,
+      "enableAutoScaling": false
+    },
     "presenceDB": {
       "softCacheLimit": 100,
       "hardCacheLimit": 10000,
