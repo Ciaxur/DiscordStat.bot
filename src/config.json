@@ -20,9 +20,14 @@
       "hardCacheLimit": 10000,
       "enableAutoScaling": false
     },
+    "presenceDelay": {
+      "softCacheLimit": 100,
+      "hardCacheLimit": 1000,
+      "enableAutoScaling": false
+    },
     "presenceDB": {
       "softCacheLimit": 100,
-      "hardCacheLimit": 5000,
+      "hardCacheLimit": 10000,
       "enableAutoScaling": false
     }
   }
