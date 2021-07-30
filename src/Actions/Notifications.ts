@@ -24,11 +24,6 @@ const Log = Logger.getInstance();
 export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
   Log.level(2).Internal('checkAndNotifyBotTracking', 'Checking if should notifying users of bot presence change');
 
-  // Get tracking entries
-  const tracking_entries: IBotTracker[] = await BotTrackerModel
-    .where('botId', botUser.userID)
-    .get() as any;
-  
   // Check if Presence Changed
   const status: StatusType = statusEnumFromString(newPresence);
   const entryResult = await PrecenseLogModel
@@ -47,6 +42,11 @@ export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: str
       return;
     }
   }
+
+  // Get tracking entries
+  const tracking_entries: IBotTracker[] = await BotTrackerModel
+    .where('botId', botUser.userID)
+    .get() as any;
   
   // Presence Changed, notify all
   Log.level(1).Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change to ${newPresence}`);
