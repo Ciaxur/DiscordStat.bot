@@ -51,13 +51,13 @@ export class Cache<T> {
     if (this._cached_data[key]) {
       const time_of_death = this._cached_data[key].ttl + this._cached_data[key].createdAt.getTime();
       if (time_of_death < Date.now()) {   // STALE CACHE!
-        Log.Internal('Cache', `Cleared Expired Cache entry '${key}'`);
+        Log.level(3).Internal('Cache', `Cleared Expired Cache entry '${key}'`);
         delete this._cached_data[key];
         return null;
       }
 
       // REFRESH CACHE
-      Log.Internal('Cache', `Cache entry refreshed '${key}'`);
+      Log.level(3).Internal('Cache', `Cache entry refreshed '${key}'`);
       this._cached_data[key].createdAt = new Date();
       return this._cached_data[key].data;
     }
@@ -105,7 +105,7 @@ export class Cache<T> {
    */
   public expire(key: string, ttl: number) {
     if (this._cached_data[key]) {
-      Log.Internal('Cache.expire', `Setting '${key}''s ttl to ${ttl}`);
+      Log.level(3).Internal('Cache.expire', `Setting '${key}''s ttl to ${ttl}`);
       this._cached_data[key].ttl = ttl;
     }
   }
@@ -167,7 +167,7 @@ export class Cache<T> {
     }
 
     for (const key of expiredKeys) {
-      Log.Internal('Cache', `Cleared Cache entry '${key}'. Limited to ${this._hardCacheLimit}`);
+      Log.level(3).Internal('Cache', `Cleared Cache entry '${key}'. Limited to ${this._hardCacheLimit}`);
       delete this._cached_data[key];
     }
   }
@@ -189,7 +189,7 @@ export class Cache<T> {
         ? this._maxCacheSize
         : newCacheHardLimit;
       
-      Log.Internal('Cache_AutoScale_UP', `Increased Hard-limit to ${this._hardCacheLimit}`);
+      Log.level(2).Internal('Cache_AutoScale_UP', `Increased Hard-limit to ${this._hardCacheLimit}`);
         
       // keep track of last item cached
       this.lastCachedItem = this._cached_data[key];
@@ -210,7 +210,7 @@ export class Cache<T> {
         ? cache_size
         : newCacheHardLimit;
       
-      Log.Internal('Cache_AutoScale_DOWN', `Decreased Hard-limit to ${this._hardCacheLimit}`);
+      Log.level(2).Internal('Cache_AutoScale_DOWN', `Decreased Hard-limit to ${this._hardCacheLimit}`);
     }
   }
 

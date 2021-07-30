@@ -49,13 +49,16 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
       PrecenseLogModel
         .where('precenseID', pEntry.precenseID)
         .update({ endTime: new Date().toUTCString() })
-        .then(() => Log.Info(`User ${user.userID} precense log updated to ${presence.status}.`))
-        .catch(err => Log.Error('User Precense\'s Endtime could not be updated.', err));
+        .then(() => Log.level(2).Info(`User ${user.userID} precense log updated to ${presence.status}.`))
+        .catch(err => {
+          Log.Error(`User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
+          Log.ErrorDump('User Presence DB Update', err, user, presence);
+        });
     } 
     
     // Same as Entry, no new precense to log
     else if (pEntry.endTime === null && pStatusID === status) {
-      Log.Print('No new precense to log. Same as before.');
+      Log.level(2).Print('No new precense to log. Same as before.');
       return;
     }
   }
@@ -69,6 +72,9 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
     startTime: new Date().toUTCString(),
     endTime: null,
   } as any)
-    .then(plog => Log.Info('Precense Log Created for ', user.userID))
-    .catch(err => Log.Error('Precense Log could not be created: ', err));
+    .then(_ => Log.level(2).Info('Precense Log Created for ', user.userID))
+    .catch(err => {
+      Log.Error('Precense Log could not be created: ', err);
+      Log.ErrorDump('Precense Log could not be created:', err, user, presence);
+    });
 }

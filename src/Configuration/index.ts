@@ -1,6 +1,6 @@
 import { IConfiguration } from '../Interfaces/Configuration.ts';
 import Logger from '../Logging/index.ts';
-const log = Logger.getInstance();
+const Log = Logger.getInstance();
 
 // Project Configuration
 const CONFIG_FILE = new URL('../config.json', import.meta.url).pathname;
@@ -86,11 +86,11 @@ class Configuration { // Singleton
   public update() {
     try {
       this.config = JSON.parse(Deno.readTextFileSync(CONFIG_FILE));
-      log.Internal('Configuration.update', 'Configuration updated');
+      Log.Internal('Configuration.update', 'Configuration updated');
 
       this.notifyUpdateHooks();
     } catch(e) {
-      log.Error('Configuration could not parse JSON config file');
+      Log.Error('Configuration could not parse JSON config file', e);
     }
   }
 
@@ -99,7 +99,7 @@ class Configuration { // Singleton
    * @param eventType Type of event to add hook to
    */
   public on(eventType: ConfigurationHooks, hookFn: () => void): void {
-    log.Internal('Configuration.on', `Add hook to event ${eventType}`);
+    Log.Internal('Configuration.on', `Add hook to event ${eventType}`);
     switch(eventType) {
       case 'update':
         this.updateHooks.push(hookFn);

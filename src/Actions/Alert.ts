@@ -25,7 +25,7 @@ export default class AlertSystem {
    * @param msg Message Alert to Broadcast
    */
   public async broadcastAlert(msg: CreateMessage) {
-    this.log.Internal('AlertSystem.broadcastAlert', `Alerting ${this.discordUserIds.length} users`);
+    this.log.level(2).Internal('AlertSystem.broadcastAlert', `Alerting ${this.discordUserIds.length} users`);
     
     return Promise.all(
       this.discordUserIds.map(id => sendDirectMessage(id, msg)),

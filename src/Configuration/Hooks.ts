@@ -1,8 +1,8 @@
 import Config from './index.ts';
 const config = Config.getInstance();
 
-import Log from '../Logging/index.ts';
-const log = Log.getInstance();
+import Logger from '../Logging/index.ts';
+const Log = Logger.getInstance();
 
 import {
   GUILD_CACHE, PRESENCE_DELAY_CACHE, 
@@ -11,23 +11,23 @@ import {
 
 
 export async function initHooks() {
-  log.Internal('Configuration Hooks', 'Initalizing Configuration Hooks');
+  Log.Internal('Configuration Hooks', 'Initalizing Configuration Hooks');
   initCacheHooks();
   initLoggingHooks();
 }
 
 async function initLoggingHooks() {
-  log.Internal('Configuration Logging Hooks', 'Initalizing Logging Configuration Hooks');
+  Log.Internal('Configuration Logging Hooks', 'Initalizing Logging Configuration Hooks');
 
   config.on('update', () => {
-    if (log.logLevel !== config.config.logging.level) {
-      log.logLevel = config.config.logging.level;
+    if (Log.logLevel !== config.config.logging.level) {
+      Log.logLevel = config.config.logging.level;
     }
   });
 }
 
 async function initCacheHooks() {
-  log.Internal('Configuration Cache Hooks', 'Initalizing Cache Configuration Hooks');
+  Log.Internal('Configuration Cache Hooks', 'Initalizing Cache Configuration Hooks');
   
   // PRESENCE CONFIG
   config.on('update', () => {

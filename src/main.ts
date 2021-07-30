@@ -18,6 +18,7 @@ const Log = Logger.getInstance();
 // Log setup from Configuration
 import Configuration from './Configuration/index.ts';
 Log.logLevel = Configuration.getInstance().config.logging.level;
+Log.log_dir_path = Configuration.getInstance().config.logging.logDir;
 
 // Load in Environment Variables
 Log.Print('Loading Environment Variables...');
@@ -72,11 +73,16 @@ startBot({
 
       // Message not from Server (Guild)
       if (msg.guildId === BigInt(0)) {
-        Log.Info(`Message did not originate from a Guild. GuildID = ${msg.guildId}`);
+        Log.level(2).Info(`Message did not originate from a Guild. GuildID = ${msg.guildId}`);
       }
 
       handleGuildMessage(msg)
-        .catch(err => Log.Error('Uncaught Exception <handleGuildMessage>: ', err));
+        .catch(err => {
+          const errorMsg = `Uncaught Exception <handleGuildMessage>: ${msg.guild?.name}[${msg.guildId}] from ${msg.authorId}`;
+          Log.Error(errorMsg, err);
+          Log.ErrorDump(errorMsg, err, msg);
+        });
+      return;
     },
 
     guildLoaded(guild) {
@@ -85,7 +91,7 @@ startBot({
 
     presenceUpdate(presence) {
       // DEBUG: Logs
-      Log.Debug(`User ${presence.user.id} changed to: ${presence.status}`);
+      Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
       
       // Create User if User does not Exist
       UserModel.find(presence.user.id)
@@ -95,7 +101,7 @@ startBot({
           if (user === undefined) {
             // Fetch ALL Data for User
             const userPayload = await getUser(BigInt(presence.user.id));
-            Log.Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
+            Log.level(1).Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
 
             // Add New Precense
             UserModel.create({
@@ -106,20 +112,23 @@ startBot({
             } as any)
               // Update PrecenseLog
               .then(user => updateUserPresence(user as any, presence))
-              .catch(err => Log.Error('User Creation Error:', err));
+              .catch(err => {
+                Log.Error(`User Creation Error: Precese Status[${presence.status}],`, err);
+                Log.ErrorDump('Precense Update User Creation Error:', err, presence);
+              });
           }
 
           // User in DB
           else {
-            Log.Info('User Found: ', user.userID);
+            Log.level(3).Info('User Found: ', user.userID);
 
             // Update Username if username is null
             if (presence.user.username && user.username === null) {
-              Log.Info(`Updating user ${user.userID}'s username to '${presence.user.username}'`);
+              Log.level(3).Info(`Updating user ${user.userID}'s username to '${presence.user.username}'`);
               UserModel
                 .where('userID', presence.user.id)
                 .update({ username: presence.user.username })
-                .then(() => Log.Info('Username updated'))
+                .then(() => Log.level(3).Info('Username updated'))
                 .catch(err => Log.Error('Could not update username: ', err));
             }
             
@@ -136,7 +145,8 @@ startBot({
 
         })
         .catch(err => {
-          Log.Error('PresenceUpdate: Find User Error: ', err);
+          Log.Error(`PresenceUpdate: Find User[${presence.user.id}, ${presence.user.username}] Error: `, err);
+          Log.ErrorDump('PrecenseUpdate:', err, presence);
         });
         
     }

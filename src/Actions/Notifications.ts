@@ -22,7 +22,7 @@ const Log = Logger.getInstance();
  * @param newPresence New Presence (online, dnd, idle, invisible)
  */
 export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
-  Log.Internal('checkAndNotifyBotTracking', 'Notifying users of bot presence change');
+  Log.level(2).Internal('checkAndNotifyBotTracking', 'Checking if should notifying users of bot presence change');
 
   // Get tracking entries
   const tracking_entries: IBotTracker[] = await BotTrackerModel
@@ -43,13 +43,13 @@ export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: str
 
     // Same as Entry, no new precense to log
     if (pEntry.endTime === null && pStatusID === status) {
-      Log.Print('No new precense for bot. Not notifying anyone.');
+      Log.level(3).Print('No new precense for bot. Not notifying anyone.');
       return;
     }
   }
   
   // Presence Changed, notify all
-  Log.Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change`);
+  Log.level(1).Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change`);
   for (const entry of tracking_entries) {
     return sendDirectMessage(BigInt(entry.userId), `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
   }

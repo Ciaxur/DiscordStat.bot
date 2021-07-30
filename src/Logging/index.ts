@@ -1,5 +1,5 @@
-import Configuration from '../Configuration/index.ts';
-import { Log, LogInterface } from './LogInstance.ts';
+import * as Path from "https://deno.land/std@0.101.0/path/mod.ts";
+import { Log, LogInterface } from './LogInterface.ts';
 
 // Hook Definition
 type LogHook = (msg: string) => void;
@@ -11,34 +11,54 @@ export default class Logger implements LogInterface {
   private static instance: Logger;
 
   /*
+    == Log Level ALL ==
+    Hooks
+    - Updated Configuration
+    Bot Start
+    - All logs for Bot init
+  
     == Log Level 1 ==
     Actions Taken
     - Commands Executed
     - Bot Precense Change Notified
     - User Precense ACTUAL Change (not same as before)
     - New User Added
+    - New Guild Added
+    - Command Bot Tracking Issued
+    - User opted in/out of Tracking
+    Errors
+    - All Errors
 
     == Log Level 2 ==
     Database Storage
     - Precense Entry
     - Precense Changes
-
-    Database Interactions
-    - Brief Database Requests TODO: Break this down further?
+    Developer Basics
+    - Message origin
+    - Internal Messages
+    - Cache Autoscale
 
     == Log Level 3 ==
+    Notifications
+    - Verbose
     Cache Logs
-    - Cache Additions
+    - All Cache Logs
+    Database Requests
+    - Fetch Summary
+    - Update Queries
+    - Not found Warnings
+    - Guild Activites
 
     == Log Level 4 ==
     Verbose Actions & Storage
     - Full Verbose Precense Changes
-    - Full Verbose Cache
+    - Command not found
 
     == Log Level 5 ==
     VERBOSE ALL
   */
   private _log_level: number = 1;
+  private _log_dir_path: string = '../logs';
 
   // Log Instances
   private noLogInstance:      LogInterface; // Used to NOT log if log level isn't met
@@ -175,6 +195,21 @@ export default class Logger implements LogInterface {
     }
   }
 
+  /**
+   * Dumps given Error log to File
+   * @param str Main string to log
+   * @param vars Variadic Variable
+   */
+   public ErrorDump(str: string, ...vars: any[]): void {
+     // Construct timestamp and logpath
+     const now = Date.now();
+     const log_path = Path.join(this._log_dir_path, `${now}_error_dump.log`);
+
+     // Create Directory if not found
+     Deno.mkdirSync(this._log_dir_path);
+     Deno.writeTextFileSync(str + vars.join(' '), log_path);
+  }
+
   // Getters & Setters
   public get logLevel() {
     return this._log_level;
@@ -186,5 +221,12 @@ export default class Logger implements LogInterface {
     }
     this.Internal('Logger', `Log Level change from ${this._log_level} -> ${newLevel}`);
     this._log_level = newLevel;
+  }
+
+  public get log_dir_path() {
+    return this._log_dir_path;
+  }
+  public set log_dir_path(newPath: string) {
+    this._log_dir_path = newPath;
   }
 }
