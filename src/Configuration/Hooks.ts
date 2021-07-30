@@ -29,7 +29,22 @@ async function initLoggingHooks() {
 async function initCacheHooks() {
   Log.Internal('Configuration Cache Hooks', 'Initalizing Cache Configuration Hooks');
   
-  // PRESENCE CONFIG
+  // PRESENCE DELAY CONFIG
+  config.on('update', () => {
+    const presense_config = config.config.cache.presenceDelay;
+  
+    // Hard Limit changed ONLY IF auto-scaling was off
+    if (presense_config.enableAutoScaling !== true && presense_config.hardCacheLimit !== undefined && presense_config.hardCacheLimit !== PRESENCE_DELAY_CACHE.hardCacheLimit) {
+      PRESENCE_DELAY_CACHE.hardCacheLimit = presense_config.hardCacheLimit;
+    }
+  
+    // Auto-Scaling Updated
+    if (presense_config.enableAutoScaling !== undefined && presense_config.enableAutoScaling !== PRESENCE_DELAY_CACHE.autoSizeScaling) {
+      PRESENCE_DELAY_CACHE.autoSizeScaling = presense_config.enableAutoScaling;
+    }
+  });
+
+  // PRESENCE ENTRIES CONFIG
   config.on('update', () => {
     const presense_config = config.config.cache.presenceDB;
   

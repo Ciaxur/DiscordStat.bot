@@ -11,9 +11,10 @@ export interface IConfiguration {
     logDir:       string,
   },
   cache: {
-    guild:        ICacheConfig,
-    userDB:       ICacheConfig,
-    userDiscord:  ICacheConfig,
-    presenceDB:   ICacheConfig,
+    guild:          ICacheConfig,
+    userDB:         ICacheConfig,
+    userDiscord:    ICacheConfig,
+    presenceDelay:  ICacheConfig,
+    presenceDB:     ICacheConfig,
   }
 }

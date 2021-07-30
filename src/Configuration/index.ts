@@ -20,6 +20,9 @@ const EMPTY_CONFIG: IConfiguration = {
     presenceDB: {
       softCacheLimit: 5,
     },
+    presenceDelay: {
+      softCacheLimit: 5,
+    },
     userDB: {
       softCacheLimit: 5,
     },

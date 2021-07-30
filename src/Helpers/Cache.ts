@@ -247,8 +247,16 @@ export const USER_DISCORD_CACHE_TTL  = 10 * 60 * 1000;      // 10 Minutes
 //    create a "Presence Cache" that has a TTL which is the
 //    delay of presence update.
 export const PRESENCE_DELAY_CACHE = new Cache<IUser>(
+  config.config.cache.presenceDelay.softCacheLimit,
+  config.config.cache.presenceDelay.hardCacheLimit || -1,
+  config.config.cache.presenceDelay.enableAutoScaling,
+);
+export const PRECENSE_DELAY_TTL = 500;                      // 500ms Delay
+
+// User Precense entries to prevent constant database calls
+export const PRESENCE_ENTRY_CACHE = new Cache<IUser>(
   config.config.cache.presenceDB.softCacheLimit,
   config.config.cache.presenceDB.hardCacheLimit || -1,
   config.config.cache.presenceDB.enableAutoScaling,
 );
-export const PRECENSE_DELAY_TTL = 500;                      // 500ms Delay
+export const PRECENSE_ENTRY_TTL = 24 * 60 * 60 * 1000;      // 24 Hours
