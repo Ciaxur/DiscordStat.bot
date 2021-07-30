@@ -89,15 +89,13 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
             if (isFromDirectMessage) return;
             
             const uuid = v4.generate().split('-').pop();
-            const combined_cmd = command.cmd + (command.arguments.length
-              ? ' ' + command.arguments.join(' ') : '');
 
             GuildActivityModel.create({
               guildActivityID: uuid as string,
               guildID: msg.guildId.toString(),
-              command: combined_cmd,
+              command: command.cmd,
             })
-              .then(() => Log.level(3).Info(`Guild Activity Added to ${msg.guildId}: ${combined_cmd} -> ${uuid}`))
+              .then(() => Log.level(3).Info(`Guild Activity Added to ${msg.guildId}: ${command.cmd} -> ${uuid}`))
               .catch(err => {
                 Log.Error('Guild Activity Error:', err);
                 Log.ErrorDump('Guild Activity:', err);

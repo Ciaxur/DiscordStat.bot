@@ -49,7 +49,7 @@ export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: str
   }
   
   // Presence Changed, notify all
-  Log.level(1).Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change`);
+  Log.level(1).Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change to ${newPresence}`);
   for (const entry of tracking_entries) {
     return sendDirectMessage(BigInt(entry.userId), `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
   }
