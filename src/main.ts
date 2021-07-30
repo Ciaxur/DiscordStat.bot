@@ -52,6 +52,9 @@ Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
 
+// Cache
+import { USER_DB_CACHE, USER_DB_CACHE_TTL } from './Helpers/Cache.ts';
+
 
 // Initialize Bot
 let gatewayReady = false;
@@ -89,16 +92,25 @@ startBot({
       Log.Info(`Guild [${guild.id}] Loaded,`, guild.name);
     },
 
-    presenceUpdate(presence) {
+    async presenceUpdate(presence) {
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
       
-      // Create User if User does not Exist
-      UserModel.find(presence.user.id)
-        .then(async (user) => {
+      try {
+        // Check Cache
+        let user = USER_DB_CACHE.get(presence.user.id.toString());
+
+        // Cache Miss
+        if (!user) {
+          user = await UserModel.find(presence.user.id.toString()) as any;
+
+          // Store in Cache
+          if (user)
+            USER_DB_CACHE.set(user.userID.toString(), user, USER_DB_CACHE_TTL);
+        }
 
           // New User
-          if (user === undefined) {
+        if (!user) {
             // Fetch ALL Data for User
             const userPayload = await getUser(BigInt(presence.user.id));
             Log.level(1).Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
@@ -118,7 +130,7 @@ startBot({
               });
           }
 
-          // User in DB
+        // User found
           else {
             Log.level(3).Info('User Found: ', user.userID);
 
@@ -143,12 +155,10 @@ startBot({
             }
           }
 
-        })
-        .catch(err => {
+      } catch (err) {
           Log.Error(`PresenceUpdate: Find User[${presence.user.id}, ${presence.user.username}] Error: `, err);
           Log.ErrorDump('PrecenseUpdate:', err, presence);
-        });
-        
+      }
     }
   }
 });
