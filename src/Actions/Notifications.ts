@@ -8,12 +8,14 @@ import {
   IPrecenseLog, IUser, StatusType,
   IBotTracker,
 } from '../Interfaces/Database.ts';
-import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { statusEnumFromString } from '../Helpers/utils.ts';
 
 // Logging System
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
+
+// Cache System
+import { PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE } from '../Helpers/Cache.ts';
 
 /**
  * Handles checking if a Bot's Presence State changes and notifies
@@ -24,16 +26,25 @@ const Log = Logger.getInstance();
 export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: string) {
   Log.level(2).Internal('checkAndNotifyBotTracking', 'Checking if should notifying users of bot presence change');
 
+  // Check Cache
+  let entry: IPrecenseLog | null = PRESENCE_ENTRY_CACHE.get(botUser.userID.toString()) || null;
+  
   // Check if Presence Changed
   const status: StatusType = statusEnumFromString(newPresence);
-  const entryResult = await PrecenseLogModel
-    .where('userID', botUser.userID)
-    .orderBy('created_at', 'desc')
-    .limit(1)
-    .get();
+  if (!entry) {
+    const entryResult = await PrecenseLogModel
+      .where('userID', botUser.userID)
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .get();
+    entry = entryResult.length ? (entryResult as any)[0] : null;
+  }
 
-  if (entryResult.length) {
-    const pEntry: IPrecenseLog & Model = (entryResult as any)[0];
+  if (entry) {
+    // Cache the entry
+    PRESENCE_ENTRY_CACHE.set(botUser.userID.toString(), entry, PRECENSE_ENTRY_TTL);
+    
+    const pEntry: IPrecenseLog = entry;
     const pStatusID = parseInt(pEntry.statusID as any);
 
     // Same as Entry, no new precense to log

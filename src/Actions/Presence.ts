@@ -3,7 +3,6 @@
 */
 
 import { PresenceUpdate } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
-import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
 
 // Database & Utils
@@ -32,14 +31,10 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
   else PRESENCE_DELAY_CACHE.set(user.userID, user, PRECENSE_DELAY_TTL);
   
   // Check Cache
-  let precenseEntry: IPrecenseLog | null = null;
-  const cachedEntry = PRESENCE_ENTRY_CACHE.get(user.userID.toString());
-  if (cachedEntry) {
-    precenseEntry = cachedEntry;
-  }
+  let precenseEntry: IPrecenseLog | null = PRESENCE_ENTRY_CACHE.get(user.userID.toString()) || null;
   
   // Check if there is a pending Status
-  if (!cachedEntry) {
+  if (!precenseEntry) {
     const entryResult = await PrecenseLogModel
       .where('userID', user.userID)
       .orderBy('startTime', 'desc')
