@@ -16,6 +16,9 @@ import { statusEnumFromString } from '../Helpers/utils.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
 
+// Cache System
+import { PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE } from '../Helpers/Cache.ts';
+
 
 
 /**
@@ -28,28 +31,41 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
   if (PRESENCE_DELAY_CACHE.get(user.userID)) return;
   else PRESENCE_DELAY_CACHE.set(user.userID, user, PRECENSE_DELAY_TTL);
   
+  // Check Cache
+  let precenseEntry: IPrecenseLog | null = null;
+  const cachedEntry = PRESENCE_ENTRY_CACHE.get(user.userID.toString());
+  if (cachedEntry) {
+    precenseEntry = cachedEntry;
+  }
+  
   // Check if there is a pending Status
-  const entryResult = await PrecenseLogModel
-    .where('userID', user.userID)
-    .orderBy('startTime', 'desc')
-    .limit(1)
-    .get();
+  if (!cachedEntry) {
+    const entryResult = await PrecenseLogModel
+      .where('userID', user.userID)
+      .orderBy('startTime', 'desc')
+      .limit(1)
+      .get();
+    precenseEntry = entryResult.length ? (entryResult as any)[0] : null;
+  }
 
   // Setup Status ID
   const status: StatusType = statusEnumFromString(presence.status);
 
   // Close off Entry
-  if (entryResult.length) {
+  if (precenseEntry) {
+    // Cache Entry
+    PRESENCE_ENTRY_CACHE.set(user.userID.toString(), precenseEntry, PRECENSE_ENTRY_TTL);
+    
     // Update ONLY if status type is Different
-    const pEntry: IPrecenseLog & Model = (entryResult as any)[0];
+    const pEntry: IPrecenseLog= precenseEntry;
     const pStatusID = parseInt(pEntry.statusID as any);
 
-    // Status Differs
+    // UPDATE: Status Differs
     if (pEntry.endTime === null && pStatusID !== status) {
       PrecenseLogModel
         .where('precenseID', pEntry.precenseID)
         .update({ endTime: new Date().toUTCString() })
-        .then(() => Log.level(2).Info(`User ${user.userID} precense log updated to ${presence.status}.`))
+        .then(() => Log.level(1).Info(`User ${user.userID} precense log updated to ${presence.status}.`))
         .catch(err => {
           Log.Error(`User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
           Log.ErrorDump('User Presence DB Update', err, user, presence);
@@ -63,7 +79,7 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
     }
   }
 
-  // Create a new Entry
+  // CREATE: new Entry
   const uuid = v4.generate().split('-').pop();
   PrecenseLogModel.create({
     precenseID: uuid,
@@ -72,7 +88,10 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
     startTime: new Date().toUTCString(),
     endTime: null,
   } as any)
-    .then(_ => Log.level(2).Info('Precense Log Created for ', user.userID))
+    .then(plog => {
+      Log.level(2).Info('Precense Log Created for ', user.userID);
+      PRESENCE_ENTRY_CACHE.set(user.userID.toString(), plog as any, PRECENSE_ENTRY_TTL);
+    })
     .catch(err => {
       Log.Error('Precense Log could not be created: ', err);
       Log.ErrorDump('Precense Log could not be created:', err, user, presence);

@@ -146,7 +146,7 @@ startBot({
 
           // Bot Tracking Check
           if ((user as any as IUser).isBot === true) {
-            await checkAndNotifyBotTracking((user as any as IUser), presence.status);
+            checkAndNotifyBotTracking((user as any as IUser), presence.status);
           }
 
           // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking

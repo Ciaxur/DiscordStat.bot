@@ -2,7 +2,7 @@
   Cache Class abstracting away Cache stale and cleanup
 */
 import { User } from "https://deno.land/x/discordeno@12.0.1/src/types/users/user.ts";
-import { IUser, IGuild } from '../Interfaces/Database.ts';
+import { IUser, IGuild, IPrecenseLog } from '../Interfaces/Database.ts';
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
 import Config from '../Configuration/index.ts';
@@ -251,10 +251,10 @@ export const PRESENCE_DELAY_CACHE = new Cache<IUser>(
   config.config.cache.presenceDelay.hardCacheLimit || -1,
   config.config.cache.presenceDelay.enableAutoScaling,
 );
-export const PRECENSE_DELAY_TTL = 500;                      // 500ms Delay
+export const PRECENSE_DELAY_TTL = 1000;                      // 1s Delay
 
 // User Precense entries to prevent constant database calls
-export const PRESENCE_ENTRY_CACHE = new Cache<IUser>(
+export const PRESENCE_ENTRY_CACHE = new Cache<IPrecenseLog>(
   config.config.cache.presenceDB.softCacheLimit,
   config.config.cache.presenceDB.hardCacheLimit || -1,
   config.config.cache.presenceDB.enableAutoScaling,
