@@ -1,7 +1,8 @@
 {
   "version": "1.7.4-dev",
   "logging": {
-    "level": 1
+    "level": 1,
+    "logDir": "logs"
   },
   "cache": {
     "guild": {

@@ -11,6 +11,7 @@ const EMPTY_CONFIG: IConfiguration = {
   version: "0.0.0",
   logging: {
     level: 1,
+    logDir: "logs"
   },
   cache: {
     guild: {

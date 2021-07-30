@@ -58,7 +58,7 @@ export default class Logger implements LogInterface {
     VERBOSE ALL
   */
   private _log_level: number = 1;
-  private _log_dir_path: string = '../logs';
+  private _log_dir_path: string = 'logs';
 
   // Log Instances
   private noLogInstance:      LogInterface; // Used to NOT log if log level isn't met
@@ -206,9 +206,17 @@ export default class Logger implements LogInterface {
      const log_path = Path.join(this._log_dir_path, `${now}_error_dump.log`);
 
      // Create Directory if not found
-     Deno.mkdirSync(this._log_dir_path);
-     Deno.writeTextFileSync(str + vars.join(' '), log_path);
-  }
+     try {
+       console.log('Creating Dir', this._log_dir_path);
+       Deno.mkdirSync(this._log_dir_path);
+     } catch(e) {
+       console.log('Directory already exists');
+     }
+
+     Deno.writeTextFileSync(log_path, str + vars.reduce((acc, elt) => (
+       acc + ' ' + (elt instanceof Object ? JSON.stringify(elt, null, 2) : elt.toString())
+     ), ''));
+   }
 
   // Getters & Setters
   public get logLevel() {
