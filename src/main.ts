@@ -109,55 +109,55 @@ startBot({
             USER_DB_CACHE.set(user.userID.toString(), user, USER_DB_CACHE_TTL);
         }
 
-          // New User
+        // New User
         if (!user) {
-            // Fetch ALL Data for User
-            const userPayload = await getUser(BigInt(presence.user.id));
-            Log.level(1).Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
+          // Fetch ALL Data for User
+          const userPayload = await getUser(BigInt(presence.user.id));
+          Log.level(1).Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
 
-            // Add New Precense
-            UserModel.create({
-              userID: userPayload.id,
-              username: userPayload.username,
-              disableTracking: null,
-              isBot: userPayload.bot,
-            } as any)
-              // Update PrecenseLog
-              .then(user => updateUserPresence(user as any, presence))
-              .catch(err => {
-                Log.Error(`User Creation Error: Precese Status[${presence.status}],`, err);
-                Log.ErrorDump('Precense Update User Creation Error:', err, presence);
-              });
-          }
+          // Add New Precense
+          UserModel.create({
+            userID: userPayload.id,
+            username: userPayload.username,
+            disableTracking: null,
+            isBot: userPayload.bot,
+          } as any)
+            // Update PrecenseLog
+            .then(user => updateUserPresence(user as any, presence))
+            .catch(err => {
+              Log.Error(`User Creation Error: Precese Status[${presence.status}],`, err);
+              Log.ErrorDump('Precense Update User Creation Error:', err, presence);
+            });
+        }
 
         // User found
-          else {
-            Log.level(3).Info('User Found: ', user.userID);
+        else {
+          Log.level(3).Info('User Found: ', user.userID);
 
-            // Update Username if username is null
-            if (presence.user.username && user.username === null) {
-              Log.level(3).Info(`Updating user ${user.userID}'s username to '${presence.user.username}'`);
-              UserModel
-                .where('userID', presence.user.id)
-                .update({ username: presence.user.username })
-                .then(() => Log.level(3).Info('Username updated'))
-                .catch(err => Log.Error('Could not update username: ', err));
-            }
-            
-            // Bot Tracking Check
-            if ((user as any as IUser).isBot === true) {
-              await checkAndNotifyBotTracking((user as any as IUser), presence.status);
-            }
-            
-            // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
-            if ((user as any as IUser).disableTracking !== true) {
-              updateUserPresence(user as any, presence);
-            }
+          // Update Username if username is null
+          if (presence.user.username && user.username === null) {
+            Log.level(3).Info(`Updating user ${user.userID}'s username to '${presence.user.username}'`);
+            UserModel
+              .where('userID', presence.user.id)
+              .update({ username: presence.user.username })
+              .then(() => Log.level(3).Info('Username updated'))
+              .catch(err => Log.Error('Could not update username: ', err));
           }
 
+          // Bot Tracking Check
+          if ((user as any as IUser).isBot === true) {
+            await checkAndNotifyBotTracking((user as any as IUser), presence.status);
+          }
+
+          // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
+          if ((user as any as IUser).disableTracking !== true) {
+            updateUserPresence(user as any, presence);
+          }
+        }
+
       } catch (err) {
-          Log.Error(`PresenceUpdate: Find User[${presence.user.id}, ${presence.user.username}] Error: `, err);
-          Log.ErrorDump('PrecenseUpdate:', err, presence);
+        Log.Error(`PresenceUpdate: Find User[${presence.user.id}, ${presence.user.username}] Error: `, err);
+        Log.ErrorDump('PrecenseUpdate:', err, presence);
       }
     }
   }
