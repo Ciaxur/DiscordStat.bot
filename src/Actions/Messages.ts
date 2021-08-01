@@ -50,7 +50,7 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
         // Make sure Guild is stored in DB
         const guild_entry = await GuildModel.where('guildID', msg.guildId.toString()).get();
         if (!guild_entry.length) {
-          Log.Warning('Guild ID not found: ', msg.guildId);
+          Log.level(3).Warning('Guild ID not found: ', msg.guildId);
           const guild = await getGuild(msg.guildId);
           GUILD_CACHE.set(msg.guildId.toString(), guild as any, GUILD_CACHE_TTL);
           await addGuild(guild as any);
@@ -61,7 +61,8 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
         }
       }
     } catch (err) {
-      Log.Error('Message Create Guild Cache Error: ', err);
+      Log.Error(`Message Create Guild[${msg.guildId}] Cache Error: `, err);
+      Log.ErrorDump('Message Create Guild Cache:', err, msg);
     }
   }
 
@@ -69,7 +70,7 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
   if (isFromDirectMessage || (cached_guild?.responseChannel === null || cached_guild?.responseChannel === undefined) || channel?.name === cached_guild?.responseChannel) {
     // Extract/Confirm Valid Command
     if (content.startsWith('!')) {
-      Log.Info(`${author.username} issued command: ${content}`);
+      Log.level(1).Info(`${author.username} issued command: ${content}`);
 
       const command = parseCommand(content);
       if (command) {
@@ -79,7 +80,7 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
         // Check Valid Command for DM
         if (isFromDirectMessage && command.cmdOrigin === 'SERVER') {
           msg.send('You can only use that command in a Server');
-          Log.Debug(`Unusable DM-Command '${command.cmd}' used in a DM`);
+          Log.level(4).Debug(`Unusable DM-Command '${command.cmd}' used in a DM`);
           return;
         }
 
@@ -88,21 +89,31 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
             if (isFromDirectMessage) return;
             
             const uuid = v4.generate().split('-').pop();
-            const combined_cmd = command.cmd + (command.arguments.length
-              ? ' ' + command.arguments.join(' ') : '');
 
             GuildActivityModel.create({
               guildActivityID: uuid as string,
               guildID: msg.guildId.toString(),
-              command: combined_cmd,
+              command: command.cmd,
+              commandArgs: command.arguments.length
+                ? command.arguments.join(' ')
+                : null,
             })
-              .then(() => Log.Info(`Guild Activity Added to ${msg.guildId}: ${combined_cmd} -> ${uuid}`))
-              .catch(err => Log.Error('Guild Activity Error:', err));
+              .then(() => Log.level(3).Info(`Guild Activity Added to ${msg.guildId}: ${command.cmd} -> ${uuid}`))
+              .catch(err => {
+                Log.Error('Guild Activity Error:', err);
+                Log.ErrorDump('Guild Activity:', err);
+              });
           })
           .catch(err => {
+            const now = Date.now();
             Log.Error('Error:', err);
-            msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${Date.now()}`)
-              .catch(err => Log.Error('Message Reply Error:', err));
+            Log.ErrorDump('Unknown Error:', now, err);
+            
+            msg.reply(`🐞 Something bad happend! Please report to Devs. Timestamp: ${now}`)
+              .catch(err => {
+                Log.Error('Message Reply Error:', err);
+                Log.ErrorDump('Message Reply Error:', err);
+              });
             return;
           });
       }

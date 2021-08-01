@@ -1,7 +1,8 @@
 import * as DatabaseInterface from './Database.ts';
 import * as CommandInterface from './Command.ts';
+import * as ConfigurationInterface from './Configuration.ts';
 
-export { DatabaseInterface, CommandInterface };
+export { DatabaseInterface, CommandInterface, ConfigurationInterface };
 
 // Expected Environment Variables
 export interface IEnvironment {

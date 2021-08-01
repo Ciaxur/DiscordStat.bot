@@ -1,9 +1,9 @@
 import { sendDirectMessage, CreateMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
-import Log from '../Logging/index.ts';
+import Logger from '../Logging/index.ts';
 
 export default class AlertSystem {
   private discordUserIds: bigint[];
-  private log: Log;
+  private log: Logger;
 
   /**
    * Initializes Alert System with given Array of Discord
@@ -13,7 +13,7 @@ export default class AlertSystem {
   constructor(ids: string[]) {
     // Initial Instantiations
     this.discordUserIds = [];
-    this.log = Log.getInstance();
+    this.log = Logger.getInstance();
     
     for (const id of ids) {
       this.discordUserIds.push(BigInt(id));
@@ -25,7 +25,7 @@ export default class AlertSystem {
    * @param msg Message Alert to Broadcast
    */
   public async broadcastAlert(msg: CreateMessage) {
-    this.log.Internal('AlertSystem.broadcastAlert', `Alerting ${this.discordUserIds.length} users`);
+    this.log.level(2).Internal('AlertSystem.broadcastAlert', `Alerting ${this.discordUserIds.length} users`);
     
     return Promise.all(
       this.discordUserIds.map(id => sendDirectMessage(id, msg)),

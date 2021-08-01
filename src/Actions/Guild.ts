@@ -20,6 +20,9 @@ export async function addGuild(guild: Guild) {
     guildName: guild.name,
     responseChannel: null,
   })
-    .then(() => Log.Info(`Guild Added: ${guild.name}`))
-    .catch(err => Log.Error('Guild Model Create Error: ', err));
+    .then(() => Log.level(1).Info(`Guild Added: ${guild.name}`))
+    .catch(err => {
+      Log.Error(`Guild Model Guild[${guild.name}] Create Error: `, err);
+      Log.ErrorDump('Add Guild:', err, guild);
+    });
 }

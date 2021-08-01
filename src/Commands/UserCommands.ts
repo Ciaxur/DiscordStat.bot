@@ -165,11 +165,12 @@ async function command_tracking_set(msg: DiscordenoMessage, cmd: Command): Promi
     .where('userID', cmd.userId)
     .update('disableTracking', cmd.directArg.toLowerCase() === 'true' ? false : true)
     .then(() => {
-      Log.Internal('command_tracking_set', `User ${cmd.userId} Tracking Updated to ${cmd.directArg}`);
+      Log.level(1).Internal('command_tracking_set', `User ${cmd.userId} Tracking Updated to ${cmd.directArg}`);
       return msg.reply(`Tracking updated to: **${cmd.directArg.toLocaleLowerCase()}**`);
     })
     .catch(err => {
-      Log.Error('Tracking Update Error:', err);
+      Log.Error(`Tracking Update Error for ${msg.authorId}:`, err);
+      Log.ErrorDump('Tracking Update:', err, msg, cmd);
       return err;
     });
 }
@@ -224,7 +225,7 @@ async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise
       userId: cmd.userId,
     } as any);
 
-    Log.Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
+    Log.level(1).Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
     return msg.reply(`Added bot tracking for bot '${cmd.directArg}'`);
   }
 
@@ -233,7 +234,7 @@ async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise
     const entry = botTrackEntry[0];
     
     await BotTrackerModel.deleteById(entry.trackId);
-    Log.Internal('botTrackEntry', `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
+    Log.level(1).Internal('botTrackEntry', `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
     
     return msg.reply(`Removed bot tracking entry for '${entry.botId}'`);
   }
@@ -262,7 +263,7 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
           throw new Error(`Bot User ${entry.botId} not found in Database`);
         }
         
-        Log.Info(`Adding ${bot_user.userID} to User Cache`);
+        Log.level(3).Info(`Adding ${bot_user.userID} to User Cache`);
         USER_DB_CACHE.set(bot_user.userID, bot_user, USER_DB_CACHE_TTL);
       }
 

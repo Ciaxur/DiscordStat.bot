@@ -1,13 +1,69 @@
-import * as Colors from 'https://deno.land/std@0.101.0/fmt/colors.ts';
+import * as Path from "https://deno.land/std@0.101.0/path/mod.ts";
+import { Log, LogInterface } from './LogInterface.ts';
 
-// Hook Definitino
+// Hook Definition
 type LogHook = (msg: string) => void;
 type LogType = 'error' | 'info' | 'warning' | 'print' | 'debug' | 'internal';
 
+
 /** Singleton Logger Class */
-export default class Logger {
+export default class Logger implements LogInterface {
   private static instance: Logger;
 
+  /*
+    == Log Level ALL ==
+    Hooks
+    - Updated Configuration
+    Bot Start
+    - All logs for Bot init
+  
+    == Log Level 1 ==
+    Actions Taken
+    - Commands Executed
+    - Bot Precense Change Notified
+    - User Precense ACTUAL Change (not same as before)
+    - New User Added
+    - New Guild Added
+    - Command Bot Tracking Issued
+    - User opted in/out of Tracking
+    Errors
+    - All Errors
+
+    == Log Level 2 ==
+    Database Storage
+    - Precense Entry
+    - Precense Changes
+    Developer Basics
+    - Message origin
+    - Internal Messages
+    - Cache Autoscale
+
+    == Log Level 3 ==
+    Notifications
+    - Verbose
+    Cache Logs
+    - All Cache Logs
+    Database Requests
+    - Fetch Summary
+    - Update Queries
+    - Not found Warnings
+    - Guild Activites
+
+    == Log Level 4 ==
+    Verbose Actions & Storage
+    - Full Verbose Precense Changes
+    - Command not found
+
+    == Log Level 5 ==
+    VERBOSE ALL
+  */
+  private _log_level: number = 1;
+  private _log_dir_path: string = 'logs';
+
+  // Log Instances
+  private noLogInstance:      LogInterface; // Used to NOT log if log level isn't met
+  private defaultLogInstance: LogInterface; // Used as generic logging
+  
   // Message Hooks
   private errorMsgHooks:     LogHook[] = [];
   private infoMsgHooks:      LogHook[] = [];
@@ -17,7 +73,10 @@ export default class Logger {
   private printMsgHooks:     LogHook[] = [];
 
 
-  private constructor() {}
+  private constructor() {
+    this.noLogInstance = new LogInterface();  // Empty Interface
+    this.defaultLogInstance = new Log();      // Default Log
+  }
 
   static getInstance(): Logger {
     if (!this.instance)
@@ -31,7 +90,7 @@ export default class Logger {
    * @param vars Variadic Variable
    */
   public Error(str: string, ...vars: any[]): void {
-    this.print(str, 0xCC2010, ...vars);
+    this.defaultLogInstance.Error(str, ...vars);
 
     // Call Message Hooks
     this.errorMsgHooks.forEach(hook => hook(str + vars.join(' ')));
@@ -43,7 +102,7 @@ export default class Logger {
    * @param vars Variadic Variable
    */
   public Info(str: string, ...vars: any[]): void {
-    this.print(str, 0x20C97D, ...vars);
+    this.defaultLogInstance.Info(str, ...vars);
 
     // Call Message Hooks
     this.infoMsgHooks.forEach(hook => hook(str + vars.join(' ')));
@@ -55,7 +114,7 @@ export default class Logger {
    * @param vars Variadic Variable
    */
   public Warning(str: string, ...vars: any[]): void {
-    this.print(str, 0xF2A71B, ...vars);
+    this.defaultLogInstance.Warning(str, ...vars);
 
     // Call Message Hooks
     this.warningMsgHooks.forEach(hook => hook(str + vars.join(' ')));
@@ -67,7 +126,7 @@ export default class Logger {
    * @param vars Variadic Variable
    */
   public Print(str: string, ...vars: any[]): void {
-    this.print(str, 0xF2F0D0, ...vars);
+    this.defaultLogInstance.Print(str, ...vars);
 
     // Call Message Hooks
     this.printMsgHooks.forEach(hook => hook(str + vars.join(' ')));
@@ -79,7 +138,7 @@ export default class Logger {
    * @param vars Variadic Variable
    */
   public Debug(str: string, ...vars: any[]): void {
-    this.print(str, 0xF24987, ...vars);
+    this.defaultLogInstance.Debug(str, ...vars);
 
     // Call Message Hook
     this.debugMsgHooks.forEach(hook => hook(str + vars.join(' ')));
@@ -91,10 +150,20 @@ export default class Logger {
    * @param vars Variadic Variable
    */
   public Internal(fn_name: string, str: string, ...vars: any[]): void {
-    this.print(`<${fn_name}> - ${str}`, 0xF27405, ...vars);
+    this.defaultLogInstance.Internal(fn_name, str, ...vars);
     
     // Call Message Hook
     this.internalMsgHooks.forEach(hook => hook(`<${fn_name}> - ${str}` + vars.join(' ')));
+  }
+
+  /**
+   * Creates a Log instance based on the log level specified
+   * @param logLevel Log Level of the Log
+   */
+  public level(logLevel: number): LogInterface {
+    if (logLevel <= this._log_level)
+      return new Log();
+    return this.noLogInstance;
   }
 
   /**
@@ -126,21 +195,46 @@ export default class Logger {
     }
   }
 
-  private print(str: string, color: number, ...vars: any[]): void {
-    console.log(
-      this.getTimestamp() + '\n\t' +
-      Colors.rgb24(
-        str + vars.join(' ')
-        , color
-      ),
-    );
+  /**
+   * Dumps given Error log to File
+   * @param str Main string to log
+   * @param vars Variadic Variable
+   */
+   public ErrorDump(str: string, ...vars: any[]): void {
+     // Construct timestamp and logpath
+     const now = Date.now();
+     const log_path = Path.join(this._log_dir_path, `${now}_error_dump.log`);
+
+     // Create Directory if not found
+     try {
+       console.log('Creating Dir', this._log_dir_path);
+       Deno.mkdirSync(this._log_dir_path);
+     } catch(e) {
+       console.log('Directory already exists');
+     }
+
+     Deno.writeTextFileSync(log_path, str + vars.reduce((acc, elt) => (
+       acc + ' ' + (elt instanceof Object ? JSON.stringify(elt, null, 2) : elt.toString())
+     ), ''));
+   }
+
+  // Getters & Setters
+  public get logLevel() {
+    return this._log_level;
+  }
+  public set logLevel(newLevel: number) {
+    if (newLevel < 0) {
+      this.Error(`Logger: Cannot set Log Level to ${newLevel}`);
+      return;
+    }
+    this.Internal('Logger', `Log Level change from ${this._log_level} -> ${newLevel}`);
+    this._log_level = newLevel;
   }
 
-  /**
-   * Generates a prefixed Timestamp string
-   */
-  private getTimestamp(): string {
-    const date = new Date();
-    return `[${date.toLocaleString()} - ${date.getTime()}]`;
+  public get log_dir_path() {
+    return this._log_dir_path;
+  }
+  public set log_dir_path(newPath: string) {
+    this._log_dir_path = newPath;
   }
 }

@@ -2,7 +2,8 @@ import { DiscordenoMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts'
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildModel } from '../Database/index.ts';
 import { SERVER_COMMANDS, USER_COMMANDS } from './index.ts';
-import CONFIG from '../config.ts';
+import Configuration from '../Configuration/index.ts';
+const CONFIG = Configuration.getInstance();
 
 
 /**
@@ -23,7 +24,7 @@ import CONFIG from '../config.ts';
 
       This bot is currently in **${totalGuilds} Server${totalGuilds > 1 ? 's' : ''}**`,
       footer: {
-        text: `Version ${CONFIG.version}`,
+        text: `Version ${CONFIG.config.version}`,
       },
     }],
   });
@@ -67,7 +68,7 @@ async function command_help(msg: DiscordenoMessage, cmd: Command): Promise<any> 
  * @param cmd Parsed Command Object
  */
 async function command_version(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return msg.reply(`Version ${CONFIG.version}`);
+  return msg.reply(`Version ${CONFIG.config.version}`);
 }
 
 /**
