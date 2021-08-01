@@ -40,6 +40,7 @@ export interface IGuildActivity {
   guildActivityID:  string,
   guildID:          string,
   command:          string,
+  commandArgs:      string | null,
 }
 
 export interface IBotTracker {
