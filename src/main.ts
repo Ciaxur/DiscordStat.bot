@@ -49,6 +49,7 @@ initHooks();
 
 // Database Connection Init
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
+let db_checked_ping = false;
 const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
 
@@ -95,6 +96,27 @@ startBot({
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
       
+      // Try to ping DB & avoid filling up query buffer
+      try {
+        const db_pingged = await db.ping();
+        if (!db_pingged && !db_checked_ping) {
+          Log.Error('Database: No Ping:', db_pingged);
+          db_checked_ping = true;
+          return;
+        }
+
+        // Ping Successful
+        db_checked_ping = false;
+      } catch(e) {
+        // Notify only Once
+        if (!db_checked_ping) {
+          Log.Error('Database: Ping Error:', e);
+          db_checked_ping = true;
+        }
+        return;
+      }
+      
+      // Handle Presence Update
       try {
         // Check Cache
         let user = USER_DB_CACHE.get(presence.user.id.toString());
