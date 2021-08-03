@@ -20,9 +20,14 @@ export class GuildActivityModel extends Model {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    command: {    // Raw Executed Command
+    command: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    commandArgs: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Command arguments separated by spaces'
     },
   } as ModelFields;
 

@@ -94,6 +94,9 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
               guildActivityID: uuid as string,
               guildID: msg.guildId.toString(),
               command: command.cmd,
+              commandArgs: command.arguments.length
+                ? command.arguments.join(' ')
+                : null,
             })
               .then(() => Log.level(3).Info(`Guild Activity Added to ${msg.guildId}: ${command.cmd} -> ${uuid}`))
               .catch(err => {
