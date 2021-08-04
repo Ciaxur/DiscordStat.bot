@@ -88,8 +88,8 @@ startBot({
         });
     },
 
-    guildLoaded(guild) {
-      Log.Info(`Guild [${guild.id}] Loaded,`, guild.name);
+    guildAvailable(guild) {
+      Log.Info(`Guild [${guild.id}] Available, `, guild.name);
     },
 
     async presenceUpdate(presence) {
