@@ -94,7 +94,7 @@ startBot({
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage.isReady()) return;
+      if (!userLocalStorage_instance.isReady()) return;
       
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
@@ -123,7 +123,7 @@ startBot({
       // Handle Presence Update
       try {
         // Fetch User from LocalStorage
-        const user = await userLocalStorage.get(presence.user.id);
+        const user = await userLocalStorage_instance.get(presence.user.id);
         Log.level(3).Info('User Found: ', user.userID);
 
         // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
