@@ -59,8 +59,7 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
       UserModel.create(userEntry as any)
         .then(() => Log.level(1).Info(`LocalStorage: User '${_user_from_discord.username}[${key}] add to Database`))
         .catch(err => {
-          Log.Error(`LocalStorage Error: User '${key}' not created: `, err);
-          Log.ErrorDump(`LocalStorage Error: User not created: `, err);
+          Log.level(1).Warning(`LocalStorage Error: User '${key}' not created: `, err);
         });
       return Promise.resolve(userEntry);
     }
