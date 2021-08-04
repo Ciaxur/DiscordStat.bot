@@ -1,10 +1,7 @@
 import { startBot, getUser, botId } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
-import { 
-  UserModel, initConnection,
-} from './Database/index.ts';
-import { IUser } from './Interfaces/Database.ts';
+import { initConnection } from './Database/index.ts';
 
 // Actions
 import { updateUserPresence } from './Actions/Presence.ts';
@@ -103,7 +100,7 @@ startBot({
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage_instance.isReady() && !guildLocalStorage_instance.isReady()) {
+      if (!userLocalStorage_instance.isReady() || !guildLocalStorage_instance.isReady()) {
         return;
       }
       
