@@ -42,6 +42,7 @@ export abstract class LocalStorage<T> {
           }
         }
       };
+      _fn();
     } else {
       this._ready = true;
     }

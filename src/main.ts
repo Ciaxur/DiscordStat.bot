@@ -93,11 +93,19 @@ startBot({
 
     guildAvailable(guild) {
       Log.Info(`Guild [${guild.id}] Available, `, guild.name);
+      
+      guildLocalStorage_instance.add(guild.id.toString(), {
+        guildID: guild.id.toString(),
+        guildName: guild.name,
+        responseChannel: null,
+      });
     },
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage_instance.isReady() && !guildLocalStorage_instance.isReady()) return;
+      if (!userLocalStorage_instance.isReady() && !guildLocalStorage_instance.isReady()) {
+        return;
+      }
       
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
