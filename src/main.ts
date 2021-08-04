@@ -54,7 +54,10 @@ const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
 
 // LocalStorage
-import { userLocalStorage_instance } from './Helpers/LocalStorage/index.ts';
+import { 
+  userLocalStorage_instance,
+  guildLocalStorage_instance,
+} from './Helpers/LocalStorage/index.ts';
 
 
 // Initialize Bot
@@ -94,7 +97,7 @@ startBot({
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage_instance.isReady()) return;
+      if (!userLocalStorage_instance.isReady() && !guildLocalStorage_instance.isReady()) return;
       
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);

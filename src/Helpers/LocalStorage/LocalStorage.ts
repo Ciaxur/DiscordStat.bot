@@ -73,5 +73,5 @@ export abstract class LocalStorage<T> {
    * Handles storing given key-value pairs
    * @param key Unique key for data
    */
-  public abstract set(key: string, val: T): Promise<void>;
+  public abstract add(key: string, val: T): Promise<void>;
 };
