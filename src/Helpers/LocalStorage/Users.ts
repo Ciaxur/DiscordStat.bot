@@ -29,11 +29,17 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
     }
 
     // Check Database
-    const _user_db_entry = await UserModel.find(key);
-    if (_user_db_entry) {
-      Log.level(2).Debug(`LocalStorage: User '${key}' Get found in Database`);
-      this.set(key, _user_db_entry as any);
-      return Promise.resolve(_user_db_entry as any);
+    try {
+      const _user_db_entry = await UserModel.find(key);
+      if (_user_db_entry) {
+        Log.level(2).Debug(`LocalStorage: User '${key}' Get found in Database`);
+        this.set(key, _user_db_entry as any);
+        return Promise.resolve(_user_db_entry as any);
+      }
+    } catch(err) {
+      Log.Error(`User LocalStorage DB.Find<user>(${key}) type(${typeof(key)}) Error: `, err);
+      Log.ErrorDump(`User LocalStorage DB.Find<user>(${key}) Error: `, err);
+      return Promise.reject(`User LocalStorage DB.Find<user>(${key}) Error: ${err}`);
     }
 
     // Not in Database, query Discord
@@ -53,7 +59,7 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
       UserModel.create(userEntry as any)
         .then(() => Log.level(1).Info(`LocalStorage: User '${_user_from_discord.username}[${key}] add to Database`))
         .catch(err => {
-          Log.Error(`LocalStorage Error: User not created: `, err);
+          Log.Error(`LocalStorage Error: User '${key}' not created: `, err);
           Log.ErrorDump(`LocalStorage Error: User not created: `, err);
         });
       return Promise.resolve(userEntry);

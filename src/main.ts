@@ -100,6 +100,7 @@ startBot({
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
       
       // Try to ping DB & avoid filling up query buffer
+      if (!db_checked_ping) {
       try {
         const db_pingged = await db.ping();
         if (!db_pingged && !db_checked_ping) {
@@ -118,12 +119,13 @@ startBot({
         }
         return;
       }
+      }
       
       
       // Handle Presence Update
       try {
         // Fetch User from LocalStorage
-        const user = await userLocalStorage_instance.get(presence.user.id);
+        const user = await userLocalStorage_instance.get(presence.user.id.toString());
         Log.level(3).Info('User Found: ', user.userID);
 
         // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
@@ -140,8 +142,8 @@ startBot({
           checkAndNotifyBotTracking(user, presence.status);
           }
       } catch (err) {
-        Log.Error(`PresenceUpdate: User[${presence.user.id}, ${presence.user.username}] Error: `, err);
-        Log.ErrorDump('PrecenseUpdate:', err, presence);
+        Log.Error(`main.PresenceUpdate: User[${presence.user.id}, ${presence.user.username}] Error: `, err);
+        Log.ErrorDump('main.PrecenseUpdate:', err, presence);
       }
     }
   }
