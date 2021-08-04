@@ -40,7 +40,6 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
     const _user_from_discord = await getUser(BigInt(key));
     if (_user_from_discord) {
       Log.level(2).Debug(`LocalStorage: User '${key}' Get queried from Discord`);
-      this.set(key, _user_from_discord as any);
 
       const userEntry: IUser = {
         userID: _user_from_discord.id.toString(),
@@ -48,6 +47,7 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
         disableTracking: null,
         isBot: _user_from_discord.bot || false,
       };
+      this.set(key, userEntry);
       
       // Add user to DB
       UserModel.create(userEntry as any)
