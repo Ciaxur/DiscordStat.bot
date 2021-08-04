@@ -12,9 +12,11 @@ import { GuildModel, GuildActivityModel } from '../Database/index.ts'
 import { parseCommand } from '../Commands/index.ts';
 import { addGuild } from '../Actions/Guild.ts';
 
+// LocalStorage
+import { userLocalStorage_instance } from '../Helpers/LocalStorage/index.ts';
+
 // Shared Cache
 import {
-  USER_DISCORD_CACHE, USER_DISCORD_CACHE_TTL,
   GUILD_CACHE, GUILD_CACHE_TTL,
 } from '../Helpers/Cache.ts';
 
@@ -29,14 +31,8 @@ const Log = Logger.getInstance();
 export async function handleGuildMessage(msg: DiscordenoMessage) {
   const { content, channel } = msg;
 
-  // Check Cache for Author
-  let author: User | null = USER_DISCORD_CACHE.get(msg.authorId.toString());
-
-  // Fetch & Cache user
-  if (!author) {
-    author = await getUser(msg.authorId);
-    USER_DISCORD_CACHE.set(msg.authorId.toString(), author, USER_DISCORD_CACHE_TTL);
-  }
+  // Get author from LocalStorage
+  const author = await userLocalStorage_instance.get(msg.authorId.toString());
 
   // State of DirectMessage Guild Origin
   const isFromDirectMessage = msg.guildId === BigInt(0);
@@ -75,7 +71,7 @@ export async function handleGuildMessage(msg: DiscordenoMessage) {
       const command = parseCommand(content);
       if (command) {
         // Add Additional Command Information
-        command.userId = author.id;
+        command.userId = author.userID;
 
         // Check Valid Command for DM
         if (isFromDirectMessage && command.cmdOrigin === 'SERVER') {

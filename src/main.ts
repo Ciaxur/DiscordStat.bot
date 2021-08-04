@@ -54,8 +54,7 @@ const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
 
 // LocalStorage
-import { UserLocalStorage } from './Helpers/LocalStorage/index.ts';
-const userLocalStorage = new UserLocalStorage();
+import { userLocalStorage_instance } from './Helpers/LocalStorage/index.ts';
 
 
 // Initialize Bot
