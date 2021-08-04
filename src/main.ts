@@ -53,8 +53,9 @@ let db_checked_ping = false;
 const db = await initConnection(env, { debug: false });
 Log.Info('Database Connected!');
 
-// Cache
-import { USER_DB_CACHE, USER_DB_CACHE_TTL } from './Helpers/Cache.ts';
+// LocalStorage
+import { UserLocalStorage } from './Helpers/LocalStorage/index.ts';
+const userLocalStorage = new UserLocalStorage();
 
 
 // Initialize Bot
@@ -93,6 +94,9 @@ startBot({
     },
 
     async presenceUpdate(presence) {
+      // Wait until Storage is Ready
+      if (!userLocalStorage.isReady()) return;
+      
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
       
@@ -116,68 +120,28 @@ startBot({
         return;
       }
       
+      
       // Handle Presence Update
       try {
-        // Check Cache
-        let user = USER_DB_CACHE.get(presence.user.id.toString());
+        // Fetch User from LocalStorage
+        const user = await userLocalStorage.get(presence.user.id);
+        Log.level(3).Info('User Found: ', user.userID);
 
-        // Cache Miss
-        if (!user) {
-          user = await UserModel.find(presence.user.id.toString()) as any;
-
-          // Store in Cache
-          if (user)
-            USER_DB_CACHE.set(user.userID.toString(), user, USER_DB_CACHE_TTL);
-        }
-
-        // New User
-        if (!user) {
-          // Fetch ALL Data for User
-          const userPayload = await getUser(BigInt(presence.user.id));
-          Log.level(1).Info(`Adding ${userPayload.username}[${userPayload.id}] to Database`);
-
-          // Add New Precense
-          UserModel.create({
-            userID: userPayload.id,
-            username: userPayload.username,
-            disableTracking: null,
-            isBot: userPayload.bot,
-          } as any)
-            // Update PrecenseLog
-            .then(user => updateUserPresence(user as any, presence))
+        // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
+        if (user.disableTracking !== true) {
+          updateUserPresence(user, presence)
             .catch(err => {
-              Log.Error(`User Creation Error: Precese Status[${presence.status}],`, err);
-              Log.ErrorDump('Precense Update User Creation Error:', err, presence);
+              Log.Error(`PresenceUpdate: User[${presence.user.id}, ${presence.user.username}] Error: `, err);
+              Log.ErrorDump('PrecenseUpdate:', err, presence);
             });
         }
 
-        // User found
-        else {
-          Log.level(3).Info('User Found: ', user.userID);
-
-          // Update Username if username is null
-          if (presence.user.username && user.username === null) {
-            Log.level(3).Info(`Updating user ${user.userID}'s username to '${presence.user.username}'`);
-            UserModel
-              .where('userID', presence.user.id)
-              .update({ username: presence.user.username })
-              .then(() => Log.level(3).Info('Username updated'))
-              .catch(err => Log.Error('Could not update username: ', err));
-          }
-
           // Bot Tracking Check
-          if ((user as any as IUser).isBot === true) {
-            checkAndNotifyBotTracking((user as any as IUser), presence.status);
+        if (user.isBot === true) {
+          checkAndNotifyBotTracking(user, presence.status);
           }
-
-          // Update PrecenseLog if User has an unclosed Precense & Did not disable tracking
-          if ((user as any as IUser).disableTracking !== true) {
-            updateUserPresence(user as any, presence);
-          }
-        }
-
       } catch (err) {
-        Log.Error(`PresenceUpdate: Find User[${presence.user.id}, ${presence.user.username}] Error: `, err);
+        Log.Error(`PresenceUpdate: User[${presence.user.id}, ${presence.user.username}] Error: `, err);
         Log.ErrorDump('PrecenseUpdate:', err, presence);
       }
     }

@@ -4,7 +4,7 @@ const Log = Logger.getInstance();
 
 type StorageSetFunction<T> = (data: T, internalMap: Map<string, T>) => void;
 
-export class LocalStorage<T> {
+export abstract class LocalStorage<T> {
   private _data: Map<string, T>;
   private _ready: boolean = false;
   private _timeout: number;
@@ -61,4 +61,17 @@ export class LocalStorage<T> {
   public get data(): Map<string, T> {
     return this._data;
   }
+
+  /**
+   * Finds and returns the value associated with given key  
+   *  if it's available
+   * @param key Unique key retrieving data for
+   */
+  public abstract get(key: string): Promise<T>;
+
+  /**
+   * Handles storing given key-value pairs
+   * @param key Unique key for data
+   */
+  public abstract set(key: string, val: T): Promise<void>;
 };
