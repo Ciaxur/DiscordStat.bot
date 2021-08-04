@@ -7,10 +7,11 @@ import { LocalStorage } from './index.ts';
 // Logging
 import Logging from '../../Logging/index.ts';
 const Log = Logging.getInstance();
+import { DataTypes, Model } from 'https://deno.land/x/denodb@v1.0.38/mod.ts';
 
 export default class GuildLocalStorage extends LocalStorage<IGuild> {
   constructor() {
-    super((user, map) => map.set(user.guildID, user), async () => (GuildModel.get() as any));
+    super((guild, map) => map.set(guild.guildID, guild), async () => (GuildModel.get() as any));
   }
 
 
@@ -20,29 +21,13 @@ export default class GuildLocalStorage extends LocalStorage<IGuild> {
    * @param key Guild's ID
    */
   public async get(key: string): Promise<IGuild> {
-    const _guild_entry = this.data.get(key);
-
-    // Early return
-    if (_guild_entry) {
-      Log.level(2).Debug(`LocalStorage: Guild '${key}' Get found`);
+    // Generic Check: Local & Database
+    const _guild_entry = await this._get(key, GuildModel, 'Guild');
+    if (_guild_entry !== null) {
       return Promise.resolve(_guild_entry);
     }
 
-    // Check Database
-    try {
-      const _guild_db_entry = await GuildModel.find(key);
-      if (_guild_db_entry) {
-        Log.level(2).Debug(`LocalStorage: Guild '${key}' Get found in Database`);
-        this.data.set(key, _guild_db_entry as any);
-        return Promise.resolve(_guild_db_entry as any);
-      }
-    } catch(err) {
-      Log.Error(`Guild LocalStorage DB.Find<guild>(${key}) type(${typeof(key)}) Error: `, err);
-      Log.ErrorDump(`Guild LocalStorage DB.Find<guild>(${key}) Error: `, err);
-      return Promise.reject(`Guild LocalStorage DB.Find<guild>(${key}) Error: ${err}`);
-    }
-
-    // Not in Database, query Discord
+    // Not in Database or Local, query Discord
     const _guild_from_discord = await getGuild(BigInt(key));
     if (_guild_from_discord) {
       Log.level(2).Debug(`LocalStorage: Guild '${key}' Get queried from Discord`);

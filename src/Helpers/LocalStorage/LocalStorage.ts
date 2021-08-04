@@ -75,4 +75,39 @@ export abstract class LocalStorage<T> {
    * @param key Unique key for data
    */
   public abstract add(key: string, val: T): Promise<void>;
+
+  /**
+   * General Data get with Database logic based on given Model
+   * @param key Unique ID of entry's key
+   * @param val Value of the entry
+   * @param model The Database model that will be used
+   * @param storageName The name of the LocalStorage
+   * @returns New/Found Entry or null if neither
+   */
+  public async _get(key: string, model: any, storageName: string): Promise<T | null> {
+    const _guild_entry = this.data.get(key);
+    const _storage_name_lower = storageName.toLocaleLowerCase();
+
+    // Early return
+    if (_guild_entry) {
+      Log.level(2).Debug(`LocalStorage: ${storageName} '${key}' Get found`);
+      return Promise.resolve(_guild_entry);
+    }
+
+    // Check Database
+    try {
+      const _data_db_entry = await model.find(key);
+      if (_data_db_entry) {
+        Log.level(2).Debug(`LocalStorage: ${storageName} '${key}' Get found in Database`);
+        this.data.set(key, _data_db_entry as any);
+        return Promise.resolve(_data_db_entry as any);
+      }
+    } catch(err) {
+      Log.Error(`${storageName} LocalStorage DB.Find<${_storage_name_lower}>(${key}) type(${typeof(key)}) Error: `, err);
+      Log.ErrorDump(`${storageName} LocalStorage DB.Find<${_storage_name_lower}>(${key}) Error: `, err);
+      return Promise.reject(`${storageName} LocalStorage DB.Find<${_storage_name_lower}>(${key}) Error: ${err}`);
+    }
+
+    return Promise.resolve(null);
+  }
 };

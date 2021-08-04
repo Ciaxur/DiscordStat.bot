@@ -19,32 +19,16 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
    * @param key User's ID
    */
   public async get(key: string): Promise<IUser> {
-    const _user_entry = this.data.get(key);
-
-    // Early return
-    if (_user_entry) {
-      Log.level(2).Debug(`LocalStorage: User '${key}' Get found`);
+    // Generic Check: Local & Database
+    const _user_entry = await this._get(key, UserModel, 'User');
+    if (_user_entry !== null) {
       return Promise.resolve(_user_entry);
     }
 
-    // Check Database
-    try {
-      const _user_db_entry = await UserModel.find(key);
-      if (_user_db_entry) {
-        Log.level(2).Debug(`LocalStorage: User '${key}' Get found in Database`);
-        this.data.set(key, _user_db_entry as any);
-        return Promise.resolve(_user_db_entry as any);
-      }
-    } catch(err) {
-      Log.Error(`User LocalStorage DB.Find<user>(${key}) type(${typeof(key)}) Error: `, err);
-      Log.ErrorDump(`User LocalStorage DB.Find<user>(${key}) Error: `, err);
-      return Promise.reject(`User LocalStorage DB.Find<user>(${key}) Error: ${err}`);
-    }
-
-    // Not in Database, query Discord
+    // Not in Database or Local, query Discord
     const _user_from_discord = await getUser(BigInt(key));
     if (_user_from_discord) {
-      Log.level(2).Debug(`LocalStorage: User '${key}' Get queried from Discord`);
+      Log.level(4).Debug(`LocalStorage: User '${key}' Get queried from Discord`);
 
       const userEntry: IUser = {
         userID: _user_from_discord.id.toString(),
