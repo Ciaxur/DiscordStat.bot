@@ -101,7 +101,7 @@ startBot({
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage_instance.isReady() || !guildLocalStorage_instance.isReady() || botNotificationLocalStorage_instance.isReady()) {
+      if (!userLocalStorage_instance.isReady() || !guildLocalStorage_instance.isReady() || !botNotificationLocalStorage_instance.isReady()) {
         return;
       }
       
