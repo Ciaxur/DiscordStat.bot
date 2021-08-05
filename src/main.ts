@@ -54,6 +54,7 @@ Log.Info('Database Connected!');
 import { 
   userLocalStorage_instance,
   guildLocalStorage_instance,
+  botNotificationLocalStorage_instance,
 } from './Helpers/LocalStorage/index.ts';
 
 
@@ -100,7 +101,7 @@ startBot({
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage_instance.isReady() || !guildLocalStorage_instance.isReady()) {
+      if (!userLocalStorage_instance.isReady() || !guildLocalStorage_instance.isReady() || botNotificationLocalStorage_instance.isReady()) {
         return;
       }
       
