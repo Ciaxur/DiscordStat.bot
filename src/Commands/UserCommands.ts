@@ -13,6 +13,9 @@ import Logger from '../Logging/index.ts';
 // SHARED CACHE
 import { USER_DB_CACHE, USER_DB_CACHE_TTL } from '../Helpers/Cache.ts';
 
+// LocalStorage
+import { botNotificationLocalStorage_instance } from '../Helpers/LocalStorage/index.ts';
+
 // LOCAL CACHE & LOGING
 const Log = Logger.getInstance();
 const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
@@ -211,31 +214,26 @@ async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise
   
   
   // Create a new Bot Tracker Entry if not available
-  const botTrackEntry: IBotTracker[] = await BotTrackerModel
-    .where('botId', cmd.directArg)
-    .where('userId', cmd.userId)
-    .get() as any;
+  const botTrackEntry: IBotTracker[] = (await botNotificationLocalStorage_instance.get(cmd.directArg))
+    .filter(entry => entry.userId === cmd.userId);
+
   
   if (!botTrackEntry.length) {
-    const uuid = v4.generate().split('-').pop();
-    await BotTrackerModel.create({
+    const uuid = (v4.generate().split('-').pop()) as string;
+    botNotificationLocalStorage_instance.add(cmd.directArg, {
       createdAt: new Date().toUTCString(),
       trackId: uuid,
       botId: cmd.directArg,
       userId: cmd.userId,
-    } as any);
+    } as IBotTracker);
 
-    Log.level(1).Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
     return msg.reply(`Added bot tracking for bot '${cmd.directArg}'`);
   }
 
   // Add/remove the user from the notification list of the bot (Toggle)
   else {
     const entry = botTrackEntry[0];
-    
-    await BotTrackerModel.deleteById(entry.trackId);
-    Log.level(1).Internal('botTrackEntry', `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
-    
+    await botNotificationLocalStorage_instance.remove(entry);
     return msg.reply(`Removed bot tracking entry for '${entry.botId}'`);
   }
 }

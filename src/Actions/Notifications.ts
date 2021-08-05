@@ -6,7 +6,6 @@ import { sendDirectMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts'
 import { PrecenseLogModel, BotTrackerModel } from '../Database/index.ts';
 import {
   IPrecenseLog, IUser, StatusType,
-  IBotTracker,
 } from '../Interfaces/Database.ts';
 import { statusEnumFromString } from '../Helpers/utils.ts';
 
@@ -19,6 +18,9 @@ import {
   PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE,
   BOT_NOTIFY_DELAY_CACHE, BOT_NOTIFY_DELAY_TTL,
 } from '../Helpers/Cache.ts';
+
+// LocalStorage
+import { botNotificationLocalStorage_instance } from '../Helpers/LocalStorage/index.ts';
 
 /**
  * Handles checking if a Bot's Presence State changes and notifies
@@ -61,13 +63,11 @@ export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: str
   }
 
   // Get tracking entries
-  const tracking_entries: IBotTracker[] = await BotTrackerModel
-    .where('botId', botUser.userID)
-    .get() as any;
+  const bot_tracker_entries = await botNotificationLocalStorage_instance.get(botUser.userID);
   
   // Presence Changed, notify all
-  Log.level(1).Info(`Notifying ${tracking_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change to ${newPresence}`);
-  for (const entry of tracking_entries) {
+  Log.level(1).Info(`Notifying ${bot_tracker_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change to ${newPresence}`);
+  for (const entry of bot_tracker_entries) {
     return sendDirectMessage(BigInt(entry.userId), `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
   }
 }

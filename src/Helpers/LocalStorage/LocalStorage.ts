@@ -2,15 +2,16 @@ import Logger from '../../Logging/index.ts';
 const Log = Logger.getInstance();
 
 
-type StorageSetFunction<T> = (data: T, internalMap: Map<string, T>) => void;
+// E = Entry | T = Data(Stored)
+type StorageSetFunction<E, D> = (data: E, internalMap: Map<string, D>) => void;
 
-export abstract class LocalStorage<T> {
+export abstract class LocalStorage<E, T=E> {
   private _data: Map<string, T>;
   private _ready: boolean = false;
   private _timeout: number;
 
   // Internal Storage Functions
-  private _store_fn: StorageSetFunction<T>; // The metohd in which to store data
+  private _store_fn: StorageSetFunction<E, T>; // The metohd in which to store data
   
   /**
    * Constructs data with optional given initialization function
@@ -18,7 +19,7 @@ export abstract class LocalStorage<T> {
    * @param timeout (Optional, Default = 5000) Milliseconds to timeout trying to load data from initFunc
    *  - Timeout of -1 will infinitly retry every 1.5s
    */
-  constructor(store_fn: StorageSetFunction<T>, initFunc?: () => Promise<T[]>, timeout = 5000) {
+  constructor(store_fn: StorageSetFunction<E, T>, initFunc?: () => Promise<E[]>, timeout = 5000) {
     this._store_fn = store_fn;
     this._data = new Map();
     this._timeout = timeout;
@@ -74,7 +75,7 @@ export abstract class LocalStorage<T> {
    * Handles storing given key-value pairs
    * @param key Unique key for data
    */
-  public abstract add(key: string, val: T): Promise<void>;
+  public abstract add(key: string, val: E): Promise<void>;
 
   /**
    * General Data get with Database logic based on given Model
