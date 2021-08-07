@@ -1,7 +1,7 @@
 import { startBot, getUser, botId } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { config } from 'https://deno.land/x/dotenv@v2.0.0/mod.ts';
 import { IEnvironment } from './Interfaces/index.ts';
-import { initConnection } from './Database/index.ts';
+import { DatabaseConnection} from './Database/index.ts';
 
 // Actions
 import { updateUserPresence } from './Actions/Presence.ts';
@@ -47,7 +47,7 @@ initHooks();
 // Database Connection Init
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 let db_checked_ping = false;
-const db = await initConnection(env, { debug: false });
+const db = await DatabaseConnection.initConnection(env, { debug: false });
 Log.Info(`Database Connected to '${env.PSQL_DB}'!`);
 
 // LocalStorage
