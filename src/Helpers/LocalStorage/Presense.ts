@@ -66,7 +66,7 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
       PrecenseLogModel
         .where('precenseID', _user_presence.precenseID)
         .update({ endTime: new Date().toUTCString() })
-        .then(() => Log.level(1).Info(`User ${key} precense log end time updated.`))
+        .then(() => Log.level(2).Info(`User ${key} precense log end time updated.`))
         .catch(err => {
           Log.Error(`User[${key}] Presence\'s Endtime could not be updated.`, err);
           Log.ErrorDump('User Presence LocalStorage Endtime Update error:', err, key, val, _user_presence);
@@ -77,7 +77,7 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
     this.data.set(key, val);
 
     return PrecenseLogModel.create(val as any)
-      .then(() => Log.level(1).Info(`LocalStorage: User[${key}] Presence[${stringFromStatusEnum(val.statusID)}] add to Database`))
+      .then(() => Log.level(2).Info(`LocalStorage: User[${key}] Presence[${stringFromStatusEnum(val.statusID)}] add to Database`))
       .catch(err => {
         Log.level(1).Warning(`LocalStorage Error: User Presence '${key}' not created: `, err);
       });
