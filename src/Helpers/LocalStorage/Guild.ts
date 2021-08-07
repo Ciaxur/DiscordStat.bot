@@ -11,7 +11,10 @@ import { DataTypes, Model } from 'https://deno.land/x/denodb@v1.0.38/mod.ts';
 
 export default class GuildLocalStorage extends LocalStorage<IGuild> {
   constructor() {
-    super((guild, map) => map.set(guild.guildID, guild), async () => (GuildModel.get() as any));
+    super((guild, map) => map.set(guild.guildID, guild), async () => {
+      Log.Debug('Querying Guilds...');
+      return GuildModel.get() as any;
+    });
   }
 
 

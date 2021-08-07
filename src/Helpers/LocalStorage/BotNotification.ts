@@ -12,7 +12,10 @@ export default class BotNotification extends LocalStorage<IBotTracker, IBotTrack
     super((botUser, map) => {
       const _entry = map.get(botUser.botId);
       map.set(botUser.botId, _entry ? [botUser, ..._entry] : [botUser])
-    }, async () => (BotTrackerModel.get() as any));
+    }, async () => {
+      Log.Debug('Querying Bot Trackers...');
+      return BotTrackerModel.get() as any;
+    });
   }
 
 

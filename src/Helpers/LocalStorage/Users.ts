@@ -9,7 +9,10 @@ const Log = Logging.getInstance();
 
 export default class UserLocalStorage extends LocalStorage<IUser> {
   constructor() {
-    super((user, map) => map.set(user.userID, user), async () => (UserModel.get() as any));
+    super((user, map) => map.set(user.userID, user), async () => {
+      Log.Debug('Querying Users...');
+      return UserModel.get() as any;
+    });
   }
 
 
