@@ -55,6 +55,7 @@ import {
   userLocalStorage_instance,
   guildLocalStorage_instance,
   botNotificationLocalStorage_instance,
+  presenceLocalStorage_instance,
 } from './Helpers/LocalStorage/index.ts';
 
 
@@ -101,7 +102,12 @@ startBot({
 
     async presenceUpdate(presence) {
       // Wait until Storage is Ready
-      if (!userLocalStorage_instance.isReady() || !guildLocalStorage_instance.isReady() || !botNotificationLocalStorage_instance.isReady()) {
+      if (
+        !userLocalStorage_instance.isReady() ||
+        !guildLocalStorage_instance.isReady() ||
+        !botNotificationLocalStorage_instance.isReady() ||
+        !presenceLocalStorage_instance.isReady()
+      ) {
         return;
       }
       
