@@ -2,6 +2,7 @@ import { IPrecenseLog, ITimestamps } from '../../Interfaces/Database.ts';
 import { PrecenseLogModel } from '../../Database/index.ts';
 import { LocalStorage } from './index.ts';
 import { DatabaseConnection} from '../../Database/Connection.ts';
+import { stringFromStatusEnum } from '../../Helpers/utils.ts';
 
 // Logging
 import Logging from '../../Logging/index.ts';
@@ -76,7 +77,7 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
     this.data.set(key, val);
 
     return PrecenseLogModel.create(val as any)
-      .then(() => Log.level(1).Info(`LocalStorage: User Presence '${val.statusID}[${key}] add to Database`))
+      .then(() => Log.level(1).Info(`LocalStorage: User[${key}] Presence[${stringFromStatusEnum(val.statusID)}] add to Database`))
       .catch(err => {
         Log.level(1).Warning(`LocalStorage Error: User Presence '${key}' not created: `, err);
       });
