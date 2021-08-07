@@ -35,5 +35,8 @@
       "hardCacheLimit": 10000,
       "enableAutoScaling": false
     }
+  },
+  "dev": {
+    "users": []
   }
 }

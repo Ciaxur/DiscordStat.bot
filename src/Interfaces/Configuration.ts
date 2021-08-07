@@ -17,5 +17,8 @@ export interface IConfiguration {
     presenceDelay:  ICacheConfig,
     botNotifyDelay: ICacheConfig,
     presenceDB:     ICacheConfig,
+  },
+  dev: {
+    users:          string[],
   }
 }

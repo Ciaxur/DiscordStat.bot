@@ -32,6 +32,9 @@ const EMPTY_CONFIG: IConfiguration = {
     userDiscord: {
       softCacheLimit: 5,
     },
+  },
+  dev: {
+    users: [],
   }
 }
 
