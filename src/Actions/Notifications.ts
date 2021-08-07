@@ -3,7 +3,6 @@
     of an occured event
 */
 import { sendDirectMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
-import { PrecenseLogModel, BotTrackerModel } from '../Database/index.ts';
 import {
   IPrecenseLog, IUser, StatusType,
 } from '../Interfaces/Database.ts';
@@ -15,12 +14,14 @@ const Log = Logger.getInstance();
 
 // Cache System
 import { 
-  PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE,
   BOT_NOTIFY_DELAY_CACHE, BOT_NOTIFY_DELAY_TTL,
 } from '../Helpers/Cache.ts';
 
 // LocalStorage
-import { botNotificationLocalStorage_instance } from '../Helpers/LocalStorage/index.ts';
+import { 
+  botNotificationLocalStorage_instance,
+  presenceLocalStorage_instance,
+} from '../Helpers/LocalStorage/index.ts';
 
 /**
  * Handles checking if a Bot's Presence State changes and notifies
@@ -34,40 +35,36 @@ export async function checkAndNotifyBotTracking(botUser: IUser, newPresence: str
   
   Log.level(2).Internal('checkAndNotifyBotTracking', 'Checking if should notifying users of bot presence change');
 
-  // Check Cache
-  let entry: IPrecenseLog | null = PRESENCE_ENTRY_CACHE.get(botUser.userID.toString()) || null;
-  
-  // Check if Presence Changed
+  // Parse Status String to type
   const status: StatusType = statusEnumFromString(newPresence);
-  if (!entry) {
-    const entryResult = await PrecenseLogModel
-      .where('userID', botUser.userID)
-      .orderBy('created_at', 'desc')
-      .limit(1)
-      .get();
-    entry = entryResult.length ? (entryResult as any)[0] : null;
-  }
-
-  if (entry) {
-    // Cache the entry
-    PRESENCE_ENTRY_CACHE.set(botUser.userID.toString(), entry, PRECENSE_ENTRY_TTL);
-    
-    const pEntry: IPrecenseLog = entry;
-    const pStatusID = parseInt(pEntry.statusID as any);
-
-    // Same as Entry, no new precense to log
-    if (pEntry.endTime === null && pStatusID === status) {
-      Log.level(3).Print('No new precense for bot. Not notifying anyone.');
-      return;
-    }
-  }
-
-  // Get tracking entries
-  const bot_tracker_entries = await botNotificationLocalStorage_instance.get(botUser.userID);
   
-  // Presence Changed, notify all
-  Log.level(1).Info(`Notifying ${bot_tracker_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change to ${newPresence}`);
-  for (const entry of bot_tracker_entries) {
-    return sendDirectMessage(BigInt(entry.userId), `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
-  }
+  // Check LocalStorage
+  return presenceLocalStorage_instance.get(botUser.userID.toString())
+
+    // Bot Presence Entry found
+    .then(async (entry) => {
+      // Check if Presence Changed
+      const pEntry: IPrecenseLog = entry;
+      const pStatusID = parseInt(pEntry.statusID as any);
+
+      // Same as Entry, no new precense to log
+      if (pStatusID === status) {
+        Log.level(3).Print('No new precense for bot. Not notifying anyone.');
+        return;
+      }
+      
+      // Get tracking entries
+      const bot_tracker_entries = await botNotificationLocalStorage_instance.get(botUser.userID);
+
+      // Presence Changed, notify all
+      Log.level(1).Info(`Notifying ${bot_tracker_entries.length} users of bot ${botUser.username}[${botUser.userID}] presence change to ${newPresence}`);
+      for (const entry of bot_tracker_entries) {
+        return sendDirectMessage(BigInt(entry.userId), `**${botUser.username}[${botUser.userID}]**: Presence Changed to \`${newPresence}\``);
+      }
+    })
+
+    // Bot Presence Entry not found
+    .catch(_ => {
+      Log.level(1).Internal('checkAndNotifyBotTracking', `No Presence entry found for bot ${botUser.username}[${botUser.userID}]`);
+    });
 }

@@ -2,7 +2,6 @@ import { IPrecenseLog, ITimestamps } from '../../Interfaces/Database.ts';
 import { PrecenseLogModel } from '../../Database/index.ts';
 import { LocalStorage } from './index.ts';
 import { DatabaseConnection} from '../../Database/Connection.ts';
-import { PostgresConnector } from 'https://deno.land/x/denodb@v1.0.38/mod.ts';
 
 // Logging
 import Logging from '../../Logging/index.ts';

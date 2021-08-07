@@ -16,6 +16,7 @@ import {
   botNotificationLocalStorage_instance,
   userLocalStorage_instance,
   guildLocalStorage_instance,
+  presenceLocalStorage_instance,
 } from '../Helpers/LocalStorage/index.ts';
 
 /**
@@ -111,6 +112,7 @@ async function dev_subcommand_print_stats_localstorage(msg: DiscordenoMessage, _
   const botTracker_ls = botNotificationLocalStorage_instance;
   const user_ls = userLocalStorage_instance;
   const guild_ls = guildLocalStorage_instance;
+  const presence_ls = presenceLocalStorage_instance;
   
   return msg.send({
     embeds: [
@@ -124,7 +126,10 @@ async function dev_subcommand_print_stats_localstorage(msg: DiscordenoMessage, _
           `Entries: ${user_ls.size()}\n\n` +
           
           '**Guild**\n' +
-          `Entries: ${guild_ls.size()}\n\n`
+          `Entries: ${guild_ls.size()}\n\n` +
+
+          '**Presence**\n' +
+          `Entries: ${presence_ls.size()}\n\n`
       },
     ]
   });
