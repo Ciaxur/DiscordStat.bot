@@ -65,6 +65,13 @@ export abstract class LocalStorage<E, T=E> {
   }
 
   /**
+   * Returns the total keys of internal data
+   */
+  public size(): number {
+    return this._data.size;
+  }
+
+  /**
    * Finds and returns the value associated with given key  
    *  if it's available
    * @param key Unique key retrieving data for

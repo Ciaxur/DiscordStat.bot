@@ -48,7 +48,7 @@ initHooks();
 Log.Print(`Initializing DB Connection to ${env.PSQL_HOST}:${env.PSQL_PORT}...`);
 let db_checked_ping = false;
 const db = await initConnection(env, { debug: false });
-Log.Info('Database Connected!');
+Log.Info(`Database Connected to '${env.PSQL_DB}'!`);
 
 // LocalStorage
 import { 
