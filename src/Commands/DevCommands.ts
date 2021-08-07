@@ -1,4 +1,4 @@
-import { DiscordenoMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
+import { DiscordenoMessage, DiscordActivityTypes, editBotStatus } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import Configuration from '../Configuration/index.ts';
 const CONFIG = Configuration.getInstance();
@@ -127,7 +127,32 @@ async function dev_subcommand_print_stats_localstorage(msg: DiscordenoMessage, _
           `Entries: ${guild_ls.size()}\n\n`
       },
     ]
-  })
+  });
+}
+
+
+/**
+ * Development Subcommand that sets the bot's custom status
+ * @param msg Discord Message Object
+ * @param cmd Command Object
+ */
+async function dev_subcommand_change_bot_status(msg: DiscordenoMessage, cmd: Command): Promise<any> {
+  const newStatus = cmd.arguments.length > 1 ? cmd.arguments.slice(1).join(' ') : '';
+  
+  editBotStatus({
+    activities: [{
+      createdAt: Date.now(),
+      name: newStatus,
+      type: DiscordActivityTypes.Custom,
+    }],
+    status: 'online',
+  });
+
+  msg.send(
+    newStatus.length
+    ? `Bot custom status set to '${newStatus}'`
+    : 'Bot status cleared'
+  );
 }
 
 export const DEV_COMMANDS: CommandMap = {
@@ -150,4 +175,8 @@ const SUB_DEV_COMMANDS: CommandMap = {
     exec: dev_subcommand_print_stats_localstorage,
     description: 'Prints LocalStorage Statistics',
   },
+  'set-bot-status': {
+    exec: dev_subcommand_change_bot_status,
+    description: 'Set the bot\'s current custom status'
+  }
 };
