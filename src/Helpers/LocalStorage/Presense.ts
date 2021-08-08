@@ -30,7 +30,24 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
           createdAt: val[5],
           updatedAt: val[6],
         } as IPrecenseLog & ITimestamps));
+    }, () => {
+      // Remove NULL entries from DB
+      const client = DatabaseConnection.getClientInstance();
+      if (!client) throw new Error('No established database connection');
+
+      Log.Debug('Removing Null Presence Logs from DB...');
+      client.queryArray(`
+        DELETE FROM "PrecenseLog" 
+        WHERE end_time IS NULL
+      `)
+        .then(res => Log.Debug('Null EndTime Presence Logs removed from DB:'))
+        .catch(err => Log.Error('Null EndTime Presence Logs FAILED to be removed from DB:', err));
     });
+
+    // Setup Callbacks on Bulk Query
+    this._db_queue.onSuccess = (entries: IPrecenseLog[]) => (
+      Log.level(2).Internal('PresenceLocalStorage', `Query Create Event: Created ${entries.length} entries`)
+    );
   }
 
 

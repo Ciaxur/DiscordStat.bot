@@ -54,7 +54,7 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
           startTime: new Date().toUTCString(),
           endTime: null,
         } as any)
-          .then(() => Log.level(1).Info(`User ${user.userID} precense log updated to ${presence.status}.`))
+          .then(() => Log.level(1).Info(`User ${user.username}[${user.userID}] precense log updated to ${presence.status}.`))
           .catch(err => {
             Log.Error(`UpdateUserPresence: User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
             Log.ErrorDump('UpdateUserPresence: User Presence Update Error', err, user, presence);
@@ -81,7 +81,7 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
         startTime: new Date().toUTCString(),
         endTime: null,
       } as any)
-        .then(() => Log.level(1).Info(`User ${user.userID} precense log updated to ${presence.status}.`))
+        .then(() => Log.level(1).Info(`User ${user.username}[${user.userID}] precense log updated to ${presence.status}.`))
         .catch(err => {
           Log.Error(`UpdateUserPresence: User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
           Log.ErrorDump('UpdateUserPresence: User Presence Update Error', err, user, presence);

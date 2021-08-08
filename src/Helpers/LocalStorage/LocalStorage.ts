@@ -9,7 +9,7 @@ interface QueryQueue<T> {
   data:     T[],    // Queued Data
 
   // Callbacks
-  onSuccess: (() => void) | null,
+  onSuccess: ((entries: T[]) => void) | null,
   onError: ((err: Error) => void) | null,
 }
 
@@ -35,7 +35,7 @@ export abstract class LocalStorage<E, T=E> {
    * @param timeout (Optional, Default = 5000) Milliseconds to timeout trying to load data from initFunc
    *  - Timeout of -1 will infinitly retry every 1.5s
    */
-  constructor(store_fn: StorageSetFunction<E, T>, initFunc?: () => Promise<E[]>, timeout = 5000) {
+  constructor(store_fn: StorageSetFunction<E, T>, initFunc?: () => Promise<E[]>, initFuncCallback?: () => void, timeout = 5000) {
     this._store_fn = store_fn;
     this._data = new Map();
     this._timeout = timeout;
@@ -56,6 +56,9 @@ export abstract class LocalStorage<E, T=E> {
             this._store_fn(elt, this._data);
           
           this._ready = true;
+
+          // Optional Callback
+          if (initFuncCallback) initFuncCallback();
         } catch(err) {
           Log.Warning('LocalStorage Init Function Error: ', err);
           // Repeat until success or timed out

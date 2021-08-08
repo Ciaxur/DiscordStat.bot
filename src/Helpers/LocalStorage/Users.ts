@@ -13,6 +13,11 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
       Log.Debug('Querying Users...');
       return UserModel.get() as any;
     });
+
+    // Setup Callbacks on Bulk Query
+    this._db_queue.onSuccess = (entries: IUser[]) => (
+      Log.level(2).Internal('UserLocalStorage', `Query Create Event: Created ${entries.length} entries`)
+    );
   }
 
 
