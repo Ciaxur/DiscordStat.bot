@@ -166,8 +166,17 @@ startBot({
 
 // Interrupt Handling: Clean up!
 ((Deno as any).signal((Deno as any).Signal.SIGINT) as Promise<any>)
-  .then(() => {
+  .then(async () => {
     Log.Print('Cleaning Up...');
+
+    // Close up LocalStorage Instances
+    await Promise.all([
+      userLocalStorage_instance._close(),
+      guildLocalStorage_instance._close(),
+      presenceLocalStorage_instance._close(),
+      botNotificationLocalStorage_instance._close(),
+    ]);
+    
     Log.Print('Closing Database...');
     db.close();
     Deno.exit(0);

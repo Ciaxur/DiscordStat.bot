@@ -2,7 +2,6 @@ import { IPrecenseLog, ITimestamps } from '../../Interfaces/Database.ts';
 import { PrecenseLogModel } from '../../Database/index.ts';
 import { LocalStorage } from './index.ts';
 import { DatabaseConnection} from '../../Database/Connection.ts';
-import { stringFromStatusEnum } from '../../Helpers/utils.ts';
 
 // Logging
 import Logging from '../../Logging/index.ts';
@@ -80,23 +79,30 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
 
     // Precense Update
     if (_user_presence) {
-      PrecenseLogModel
-        .where('precenseID', _user_presence.precenseID)
-        .update({ endTime: new Date().toUTCString() })
-        .then(() => Log.level(2).Info(`User ${key} precense log end time updated.`))
-        .catch(err => {
-          Log.Error(`User[${key}] Presence\'s Endtime could not be updated.`, err);
-          Log.ErrorDump('User Presence LocalStorage Endtime Update error:', err, key, val, _user_presence);
-        });
+      // Close and append entry to DB
+      this._add_entry_to_db({
+        ..._user_presence,
+        endTime: new Date().toUTCString(),
+      } as any, PrecenseLogModel);
+      Log.level(2).Info(`User ${key} precense log end time updated and queued to Database.`);
     }
 
     // Add/Overwrite new Precense
     this.data.set(key, val);
+  }
 
-    return PrecenseLogModel.create(val as any)
-      .then(() => Log.level(2).Info(`LocalStorage: User[${key}] Presence[${stringFromStatusEnum(val.statusID)}] add to Database`))
-      .catch(err => {
-        Log.level(1).Warning(`LocalStorage Error: User Presence '${key}' not created: `, err);
-      });
+  /**
+   * Overload Flushing Queries to also write unclosed Presence entries
+   */
+  public async _close(): Promise<any> {
+    // Close regularly (create pending entries)
+    await super._close();
+
+    // Additionally write unclosed Presence Entries
+    Log.Debug('PresenceLocalStorage: Storing unclosed entries');
+    const entries = [...this.data.values()]
+    return PrecenseLogModel
+      .create(entries as any[])
+      .then(() => Log.Internal('PresenceLocalStorage', `Stored ${entries.length} unclosed entries`));
   }
 };

@@ -118,6 +118,23 @@ export abstract class LocalStorage<E, T=E> {
   public abstract add(key: string, val: E): Promise<void>;
 
   /**
+   * Cleans up & flushes queued entries
+   */
+  public async _close() {
+    if(this._db_queue_timeout_id)
+      clearTimeout(this._db_queue_timeout_id);
+    Log.level(1).Info('Flushing LocalStorage Queued Queries...');
+    return this._event_create_query_db();
+  }
+
+  /**
+   * Flushes Queued Entries
+   */
+  public async _flush() {
+    return this._event_create_query_db();
+  }
+  
+  /**
    * General Data get with Database logic based on given Model
    * @param key Unique ID of entry's key
    * @param val Value of the entry
@@ -176,7 +193,7 @@ export abstract class LocalStorage<E, T=E> {
   /**
    * Model DB Create event: Bulk Create to supplied model
    */
-  private _event_create_query_db(): void {
+  private async _event_create_query_db(): Promise<any> {
     // Reset timeout
     this._db_queue_timeout_id = null;
     
@@ -184,32 +201,38 @@ export abstract class LocalStorage<E, T=E> {
     const _entries = this._db_queue.data;
     this._db_queue.data = [];
 
-    Log.level(1).Debug(`LocalStorage: Bulk Create ${_entries.length} entries`);
-    this._db_queue.model
-      .create(_entries)
-      .then(() => {
-        if (this._db_queue.onSuccess) this._db_queue.onSuccess()
-        else {
-          Log.level(2).Internal('LocalStorage', `Query Create Event: Created ${_entries.length} entries`)
-        }
-      })
-      .catch((err: Error) => {
-        // Revert _entries back into queue
-        this._db_queue.data = [
-          ...this._db_queue.data,
-          ..._entries,
-        ];
+    if (this._db_queue.model) {
+      Log.level(1).Debug(`LocalStorage: Bulk Create ${_entries.length} entries`);
+      return this._db_queue.model
+        .create(_entries)
+        .then(() => {
+          if (this._db_queue.onSuccess) this._db_queue.onSuccess(_entries)
+          else {
+            Log.level(2).Internal('LocalStorage', `Query Create Event: Created ${_entries.length} entries`);
+          }
+        })
+        .catch((err: Error) => {
+          // Revert _entries back into queue
+          this._db_queue.data = [
+            ...this._db_queue.data,
+            ..._entries,
+          ];
+  
+          // Call Error Callback
+          if (this._db_queue.onError) this._db_queue.onError(err);
+          else {
+            Log.Error('LocalStorage: Query Create Event Error: ', err);
+            Log.ErrorDump('LocalStorage: Query Create Event Error', err, _entries);
+          }
+  
+          // Reset timeout
+          Log.level(2).Debug('LocalStorage Create Query Event: Reset timeout');
+          this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
+        });
+    } else {
+      Log.level(1).Warning('LocalStorage: No Database Model Available');
+    }
 
-        // Call Error Callback
-        if (this._db_queue.onError) this._db_queue.onError(err);
-        else {
-          Log.Error('LocalStorage: Query Create Event Error: ', err);
-          Log.ErrorDump('LocalStorage: Query Create Event Error', err, _entries);
-        }
-
-        // Reset timeout
-        Log.level(2).Debug('LocalStorage Create Query Event: Reset timeout');
-        this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
-      });
+    return Promise.resolve();
   }
 };
