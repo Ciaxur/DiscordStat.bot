@@ -39,7 +39,7 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
         DELETE FROM "PrecenseLog" 
         WHERE end_time IS NULL
       `)
-        .then(res => Log.Debug('Null EndTime Presence Logs removed from DB:'))
+        .then(res => Log.Debug('Null EndTime Presence Logs removed from DB'))
         .catch(err => Log.Error('Null EndTime Presence Logs FAILED to be removed from DB:', err));
     });
 
