@@ -1,5 +1,8 @@
 import { DiscordenoMessage, DiscordActivityTypes, editBotStatus } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
+import Logger from '../Logging/index.ts';
+const Log = Logger.getInstance();
+
 import Configuration from '../Configuration/index.ts';
 const CONFIG = Configuration.getInstance();
 
@@ -164,6 +167,32 @@ async function dev_subcommand_change_bot_status(msg: DiscordenoMessage, cmd: Com
   );
 }
 
+/**
+ * Initiates flush on LocalStorage Queues
+ * @param msg Discord Message Object
+ * @param cmd Command Object
+ */
+async function dev_subcommand_flush_localstorage_queue(msg: DiscordenoMessage, _: Command): Promise<any> {
+  await Promise.all([
+    userLocalStorage_instance._flush(),
+    guildLocalStorage_instance._flush(),
+    presenceLocalStorage_instance._flush(),
+    botNotificationLocalStorage_instance._flush(),
+  ])
+    .then(() => msg.send('Flushed all LocalStorage Queues'))
+    .catch(err => {
+      Log.Error('Developer Command: Flush Error: ', err);
+      msg.send({
+        content: 'LocalStorage Flush Error Occured',
+        embeds: [
+          {
+            description: JSON.stringify(err),
+          },
+        ],
+      });
+    });
+}
+
 export const DEV_COMMANDS: CommandMap = {
   'dev': {
     exec: dev_command_handler,
@@ -187,5 +216,9 @@ const SUB_DEV_COMMANDS: CommandMap = {
   'set-bot-status': {
     exec: dev_subcommand_change_bot_status,
     description: 'Set the bot\'s current custom status'
-  }
+  },
+  'flush-storage-queue': {
+    exec: dev_subcommand_flush_localstorage_queue,
+    description: 'Flushes all LocalStorage Queues',
+  },
 };
