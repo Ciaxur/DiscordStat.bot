@@ -57,11 +57,10 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
   public add(key: string, val: IUser): Promise<void> {
     if (!this.data.has(key)) {
       this.data.set(key, val);
-      UserModel.create(val as any)
-        .then(() => Log.level(1).Info(`LocalStorage: User '${val.username}[${key}] add to Database`))
-        .catch(err => {
-          Log.level(1).Warning(`LocalStorage Error: User '${key}' not created: `, err);
-        });
+
+      // Queue up Create Entries to DB
+      this._add_entry_to_db(val, UserModel);
+      Log.level(1).Info(`LocalStorage: User '${val.username}[${key}] add queued to Database`)
     }
     return Promise.resolve();
   }

@@ -120,16 +120,20 @@ async function dev_subcommand_print_stats_localstorage(msg: DiscordenoMessage, _
         title: 'LocalStorage Statistics',
         description: 
           '**Bot Tracker**\n' +
-          `Entries: ${botTracker_ls.size()}\n\n` +
+          `Entries: ${botTracker_ls.size()}\n` +
+          `Queued Entries: ${botTracker_ls.getQueueSize()}\n\n` +
 
           '**User**\n' +
-          `Entries: ${user_ls.size()}\n\n` +
+          `Entries: ${user_ls.size()}\n` +
+          `Queued Entries: ${user_ls.getQueueSize()}\n\n` +
           
           '**Guild**\n' +
-          `Entries: ${guild_ls.size()}\n\n` +
+          `Entries: ${guild_ls.size()}\n` +
+          `Queued Entries: ${guild_ls.getQueueSize()}\n\n` +
 
           '**Presence**\n' +
-          `Entries: ${presence_ls.size()}\n\n`
+          `Entries: ${presence_ls.size()}\n` +
+          `Queued Entries: ${presence_ls.getQueueSize()}\n\n`
       },
     ]
   });

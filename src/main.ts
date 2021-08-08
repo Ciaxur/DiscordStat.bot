@@ -110,33 +110,33 @@ startBot({
       ) {
         return;
       }
-      
+
       // DEBUG: Logs
       Log.level(2).Debug(`User ${presence.user.id} changed to: ${presence.status}`);
-      
+
       // Try to ping DB & avoid filling up query buffer
       if (!db_checked_ping) {
-      try {
-        const db_pingged = await db.ping();
-        if (!db_pingged && !db_checked_ping) {
-          Log.Error('Database: No Ping:', db_pingged);
-          db_checked_ping = true;
+        try {
+          const db_pingged = await db.ping();
+          if (!db_pingged && !db_checked_ping) {
+            Log.Error('Database: No Ping:', db_pingged);
+            db_checked_ping = true;
+            return;
+          }
+
+          // Ping Successful
+          db_checked_ping = false;
+        } catch (e) {
+          // Notify only Once
+          if (!db_checked_ping) {
+            Log.Error('Database: Ping Error:', e);
+            db_checked_ping = true;
+          }
           return;
         }
+      }
 
-        // Ping Successful
-        db_checked_ping = false;
-      } catch(e) {
-        // Notify only Once
-        if (!db_checked_ping) {
-          Log.Error('Database: Ping Error:', e);
-          db_checked_ping = true;
-        }
-        return;
-      }
-      }
-      
-      
+
       // Handle Presence Update
       try {
         // Fetch User from LocalStorage
@@ -152,10 +152,10 @@ startBot({
             });
         }
 
-          // Bot Tracking Check
+        // Bot Tracking Check
         if (user.isBot === true) {
           checkAndNotifyBotTracking(user, presence.status);
-          }
+        }
       } catch (err) {
         Log.Error(`main.PresenceUpdate: User[${presence.user.id}, ${presence.user.username}] Error: `, err);
         Log.ErrorDump('main.PrecenseUpdate:', err, presence);

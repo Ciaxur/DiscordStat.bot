@@ -2,6 +2,17 @@ import Logger from '../../Logging/index.ts';
 const Log = Logger.getInstance();
 
 
+// Database Query Queue
+const QUERY_TIMEOUT = 1 * 60 * 1000;
+interface QueryQueue<T> {
+  model:    any,    // Used DenoDB Model
+  data:     T[],    // Queued Data
+
+  // Callbacks
+  onSuccess: (() => void) | null,
+  onError: ((err: Error) => void) | null,
+}
+
 // E = Entry | T = Data(Stored)
 type StorageSetFunction<E, D> = (data: E, internalMap: Map<string, D>) => void;
 
@@ -12,6 +23,11 @@ export abstract class LocalStorage<E, T=E> {
 
   // Internal Storage Functions
   private _store_fn: StorageSetFunction<E, T>; // The metohd in which to store data
+
+  // Database Event Data
+  protected _db_queue: QueryQueue<T>;
+  private   _db_queue_timeout_id: number | null;
+
   
   /**
    * Constructs data with optional given initialization function
@@ -23,6 +39,13 @@ export abstract class LocalStorage<E, T=E> {
     this._store_fn = store_fn;
     this._data = new Map();
     this._timeout = timeout;
+    this._db_queue = {
+      data: [],
+      model: null,
+      onSuccess: null,
+      onError: null,
+    }
+    this._db_queue_timeout_id = null;
 
     if (initFunc) {
       const _fn = async () => {
@@ -65,6 +88,13 @@ export abstract class LocalStorage<E, T=E> {
   }
 
   /**
+   * @returns Queued up queries
+   */
+  public getQueueSize(): number {
+    return this._db_queue.data.length;
+  }
+
+  /**
    * Returns the total keys of internal data
    */
   public size(): number {
@@ -92,7 +122,7 @@ export abstract class LocalStorage<E, T=E> {
    * @param storageName The name of the LocalStorage
    * @returns New/Found Entry or null if neither
    */
-  public async _get(key: string, model: any, storageName: string): Promise<T | null> {
+  protected async _get(key: string, model: any, storageName: string): Promise<T | null> {
     const _guild_entry = this.data.get(key);
     const _storage_name_lower = storageName.toLocaleLowerCase();
 
@@ -117,5 +147,66 @@ export abstract class LocalStorage<E, T=E> {
     }
 
     return Promise.resolve(null);
+  }
+
+  /**
+   * Handles adding given entry to the model with queue and bulk
+   *  queries
+   * @param data Data of the entry
+   * @param model The Database model that will be used
+   */
+  protected _add_entry_to_db(data: T, model: any): void {
+    // Keep track of given DB Model
+    if (!this._db_queue.model && model) 
+      this._db_queue.model = model;
+
+    // Queue up data
+    this._db_queue.data.push(data);
+
+    // Set timeout event
+    if (this._db_queue_timeout_id === null) {
+      this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
+    }
+  }
+
+  // EVENTS
+  /**
+   * Model DB Create event: Bulk Create to supplied model
+   */
+  private _event_create_query_db(): void {
+    // Reset timeout
+    this._db_queue_timeout_id = null;
+    
+    // Copy data over to allow other processes from accessing the data
+    const _entries = this._db_queue.data;
+    this._db_queue.data = [];
+
+    Log.level(1).Debug(`LocalStorage: Bulk Create ${_entries.length} entries`);
+    this._db_queue.model
+      .create(_entries)
+      .then(() => {
+        if (this._db_queue.onSuccess) this._db_queue.onSuccess()
+        else {
+          Log.level(2).Internal('LocalStorage', `Query Create Event: Created ${_entries.length} entries`)
+        }
+      })
+      .catch((err: Error) => {
+        // Revert _entries back into queue
+        this._db_queue.data = [
+          ...this._db_queue.data,
+          ..._entries,
+        ];
+
+        // Call Error Callback
+        if (this._db_queue.onError) this._db_queue.onError(err);
+        else {
+          Log.Error('LocalStorage: Query Create Event Error: ', err);
+          Log.ErrorDump('LocalStorage: Query Create Event Error', err, _entries);
+        }
+
+        // Reset timeout
+        Log.level(2).Debug('LocalStorage Create Query Event: Reset timeout');
+        this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
+      });
   }
 };

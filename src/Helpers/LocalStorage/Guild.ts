@@ -7,7 +7,6 @@ import { LocalStorage } from './index.ts';
 // Logging
 import Logging from '../../Logging/index.ts';
 const Log = Logging.getInstance();
-import { DataTypes, Model } from 'https://deno.land/x/denodb@v1.0.38/mod.ts';
 
 export default class GuildLocalStorage extends LocalStorage<IGuild> {
   constructor() {
