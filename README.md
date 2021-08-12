@@ -78,6 +78,15 @@ All commands should be prefixed with `!`.
 - `clear-bot-channel`: Clears the Server Channel that the bot should respond to [owner only]
 - `server-interaction`: Prints the current server's user interaction with this bot
 
+**Developer-Only Commands**
+Only Developer users in config.json can use these commands
+
+- `help`: Print dev help menu
+- `stats-cache`: Prints Cache Statistics
+- `stats-storage`: Prints LocalStorage Statistics
+- `set-bot-status`: Set the bot's current custom status
+- `flush-storage-queue`: Flushes all LocalStorage Queues
+
 
 ## License 📔
 Licensed under the [MIT](LICENSE) License.
