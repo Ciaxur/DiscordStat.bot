@@ -1,5 +1,5 @@
 {
-  "version": "1.7.4-dev",
+  "version": "1.8.0-dev",
   "logging": {
     "level": 1,
     "logDir": "logs"
@@ -35,5 +35,8 @@
       "hardCacheLimit": 10000,
       "enableAutoScaling": false
     }
+  },
+  "dev": {
+    "users": []
   }
 }

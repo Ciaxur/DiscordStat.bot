@@ -1,5 +1,5 @@
 import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
-import { DiscordenoMessage, sendDirectMessage } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
+import { DiscordenoMessage, sendDirectMessage, getUser } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { IPrecenseLog, IUser, IBotTracker, ITimestamps } from '../Interfaces/Database.ts';
@@ -10,8 +10,11 @@ import { ITimeDifference } from '../Helpers/utils.ts';
 import { Cache } from '../Helpers/Cache.ts';
 import Logger from '../Logging/index.ts';
 
-// SHARED CACHE
-import { USER_DB_CACHE, USER_DB_CACHE_TTL } from '../Helpers/Cache.ts';
+// LocalStorage
+import { 
+  botNotificationLocalStorage_instance,
+  userLocalStorage_instance,
+} from '../Helpers/LocalStorage/index.ts';
 
 // LOCAL CACHE & LOGING
 const Log = Logger.getInstance();
@@ -211,31 +214,26 @@ async function command_clear_data(msg: DiscordenoMessage, cmd: Command): Promise
   
   
   // Create a new Bot Tracker Entry if not available
-  const botTrackEntry: IBotTracker[] = await BotTrackerModel
-    .where('botId', cmd.directArg)
-    .where('userId', cmd.userId)
-    .get() as any;
+  const botTrackEntry: IBotTracker[] = (await botNotificationLocalStorage_instance.get(cmd.directArg))
+    .filter(entry => entry.userId === cmd.userId);
+
   
   if (!botTrackEntry.length) {
-    const uuid = v4.generate().split('-').pop();
-    await BotTrackerModel.create({
+    const uuid = (v4.generate().split('-').pop()) as string;
+    botNotificationLocalStorage_instance.add(cmd.directArg, {
       createdAt: new Date().toUTCString(),
       trackId: uuid,
       botId: cmd.directArg,
       userId: cmd.userId,
-    } as any);
-
-    Log.level(1).Internal('botTrackEntry', `New Bot Tracking Entry '${uuid}': [bot:${cmd.directArg}] [user:${cmd.userId}]`);
+    } as IBotTracker);
+    
     return msg.reply(`Added bot tracking for bot '${cmd.directArg}'`);
   }
 
   // Add/remove the user from the notification list of the bot (Toggle)
   else {
     const entry = botTrackEntry[0];
-    
-    await BotTrackerModel.deleteById(entry.trackId);
-    Log.level(1).Internal('botTrackEntry', `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
-    
+    await botNotificationLocalStorage_instance.remove(entry);
     return msg.reply(`Removed bot tracking entry for '${entry.botId}'`);
   }
 }
@@ -255,16 +253,23 @@ async function command_list_bot_tracking(msg: DiscordenoMessage, cmd: Command): 
     let list_str = `**Detailed list of ${botTrackEntries.length} Bots being tracked:**\n`;
     
     for (const entry of botTrackEntries) {
-      // Check if User info in Cache
-      let bot_user = USER_DB_CACHE.get(entry.botId);
-      if (!bot_user) {
-        bot_user = (await UserModel.find(entry.botId)) as any;
-        if (!bot_user) {
-          throw new Error(`Bot User ${entry.botId} not found in Database`);
-        }
+      // Get user from LocalStorage
+      let bot_user: IUser;
+      
+      try {
+        bot_user = await userLocalStorage_instance.get(entry.botId);
+      } catch(err) {
+        Log.level(1).Warning('UserCommands: Bot user not found');
+
+        const _user_from_discord = await getUser(BigInt(entry.botId));
+        bot_user = {
+          userID: _user_from_discord.id,
+          disableTracking: null,
+          isBot: _user_from_discord.bot === undefined ? false : _user_from_discord.bot,
+          username: _user_from_discord.username,
+        };
         
-        Log.level(3).Info(`Adding ${bot_user.userID} to User Cache`);
-        USER_DB_CACHE.set(bot_user.userID, bot_user, USER_DB_CACHE_TTL);
+        userLocalStorage_instance.add(_user_from_discord.id, bot_user);
       }
 
       // Append Information

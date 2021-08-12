@@ -2,7 +2,7 @@
   Handles Guild State changes, database additions, and other Guild
     related utilities
 */
-import { Guild } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
+import { DiscordenoGuild } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { GuildModel } from '../Database/index.ts';
 
 // Logging System
@@ -13,7 +13,7 @@ const Log = Logger.getInstance();
  * Adds a given Guild object to the Database
  * @param guild Guild Object to be added as an entry
  */
-export async function addGuild(guild: Guild) {
+export async function addGuild(guild: DiscordenoGuild) {
   // Store Guild Entry
   return GuildModel.create({
     guildID: guild.id.toString(),
@@ -22,7 +22,6 @@ export async function addGuild(guild: Guild) {
   })
     .then(() => Log.level(1).Info(`Guild Added: ${guild.name}`))
     .catch(err => {
-      Log.Error(`Guild Model Guild[${guild.name}] Create Error: `, err);
-      Log.ErrorDump('Add Guild:', err, guild);
+      Log.level(2).Warning(`Guild Model Guild[${guild.name}] Create Error: `, err);
     });
 }

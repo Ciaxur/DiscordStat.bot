@@ -110,6 +110,13 @@ export class Cache<T> {
     }
   }
 
+  /**
+   * Returns the size of the internal Cache entries
+   */
+  public size(): number {
+    return Object.keys(this._cached_data).length;
+  }
+
   // Getters & Setters
   public get maxCacheSize() {
     return this._maxCacheSize;

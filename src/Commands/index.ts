@@ -1,12 +1,13 @@
 import { SERVER_COMMANDS } from './ServerCommands.ts';
 import { USER_COMMANDS } from './UserCommands.ts';
+import { DEV_COMMANDS } from './DevCommands.ts';
 import { GENERAL_COMMANDS } from './GeneralCommands.ts';
 import { Command } from '../Interfaces/Command.ts';
 
-const COMMAND_REGEX = /^!([\w-]+)\s?(\w+)?/;
+const COMMAND_REGEX = /^!([\w-]+)\s?([\w-]+)?/;
 
 // Origin of the Command (Server, User, etc...)
-export type CMD_ORIGIN = 'GENERAL' | 'SERVER' | 'USER';
+export type CMD_ORIGIN = 'GENERAL' | 'SERVER' | 'USER' | 'DEV';
 
 export function parseCommand(str: string): Command | null {
   try {
@@ -23,6 +24,10 @@ export function parseCommand(str: string): Command | null {
     if (!fn) {
       fn = SERVER_COMMANDS[cmd];
       fn_origin = 'SERVER';
+    }
+    if (!fn) {
+      fn = DEV_COMMANDS[cmd];
+      fn_origin = 'DEV'
     }
 
     return {

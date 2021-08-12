@@ -11,7 +11,7 @@ const CONFIG = Configuration.getInstance();
  * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
- async function command_info(msg: DiscordenoMessage, cmd: Command): Promise<any> {
+async function command_info(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Get Total Guilds Stored
   const totalGuilds = (await GuildModel.count()) || 0;
   

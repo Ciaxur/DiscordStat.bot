@@ -7,16 +7,15 @@ import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
 
 // Database & Utils
 import { PRECENSE_DELAY_TTL, PRESENCE_DELAY_CACHE } from '../Helpers/Cache.ts';
-import { PrecenseLogModel } from '../Database/index.ts';
-import { IPrecenseLog, IUser, StatusType } from '../Interfaces/Database.ts';
+import { IUser, StatusType } from '../Interfaces/Database.ts';
 import { statusEnumFromString } from '../Helpers/utils.ts';
 
 // Logging System
 import Logger from '../Logging/index.ts';
 const Log = Logger.getInstance();
 
-// Cache System
-import { PRECENSE_ENTRY_TTL, PRESENCE_ENTRY_CACHE } from '../Helpers/Cache.ts';
+// LocalStorage
+import { presenceLocalStorage_instance } from '../Helpers/LocalStorage/index.ts'
 
 
 
@@ -30,65 +29,62 @@ export async function updateUserPresence(user: IUser, presence: PresenceUpdate) 
   if (PRESENCE_DELAY_CACHE.get(user.userID)) return;
   else PRESENCE_DELAY_CACHE.set(user.userID, user, PRECENSE_DELAY_TTL);
   
-  // Check Cache
-  let precenseEntry: IPrecenseLog | null = PRESENCE_ENTRY_CACHE.get(user.userID.toString()) || null;
-  
-  // Check if there is a pending Status
-  if (!precenseEntry) {
-    const entryResult = await PrecenseLogModel
-      .where('userID', user.userID)
-      .orderBy('startTime', 'desc')
-      .limit(1)
-      .get();
-    precenseEntry = entryResult.length ? (entryResult as any)[0] : null;
-  }
-
   // Setup Status ID
   const status: StatusType = statusEnumFromString(presence.status);
 
-  // Close off Entry
-  if (precenseEntry) {
-    // Cache Entry
-    PRESENCE_ENTRY_CACHE.set(user.userID.toString(), precenseEntry, PRECENSE_ENTRY_TTL);
-    
-    // Update ONLY if status type is Different
-    const pEntry: IPrecenseLog= precenseEntry;
-    const pStatusID = parseInt(pEntry.statusID as any);
+  // Check LocalStorage
+  return presenceLocalStorage_instance.get(user.userID.toString())
 
-    // UPDATE: Status Differs
-    if (pEntry.endTime === null && pStatusID !== status) {
-      PrecenseLogModel
-        .where('precenseID', pEntry.precenseID)
-        .update({ endTime: new Date().toUTCString() })
-        .then(() => Log.level(1).Info(`User ${user.userID} precense log updated to ${presence.status}.`))
-        .catch(err => {
-          Log.Error(`User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
-          Log.ErrorDump('User Presence DB Update', err, user, presence);
-        });
-    } 
-    
-    // Same as Entry, no new precense to log
-    else if (pEntry.endTime === null && pStatusID === status) {
-      Log.level(2).Print('No new precense to log. Same as before.');
-      return;
-    }
-  }
+    // Found pending status entry
+    .then(pEntry => {
+      // Update ONLY if status type is Different
+      const pStatusID = parseInt(pEntry.statusID as any);
 
-  // CREATE: new Entry
-  const uuid = v4.generate().split('-').pop();
-  PrecenseLogModel.create({
-    precenseID: uuid,
-    userID: user.userID,
-    statusID: status,
-    startTime: new Date().toUTCString(),
-    endTime: null,
-  } as any)
-    .then(plog => {
-      Log.level(2).Info('Precense Log Created for ', user.userID);
-      PRESENCE_ENTRY_CACHE.set(user.userID.toString(), plog as any, PRECENSE_ENTRY_TTL);
+      // UPDATE: Status Differs
+      if (pStatusID !== status) {
+
+        // CREATE: new Entry
+        const uuid = v4.generate().split('-').pop();
+        
+        // NOTE: Creation closes off Endtime
+        presenceLocalStorage_instance.add(user.userID.toString(), {
+          precenseID: uuid,
+          userID: user.userID,
+          statusID: status,
+          startTime: new Date().toUTCString(),
+          endTime: null,
+        } as any)
+          .then(() => Log.level(1).Info(`User ${user.username}[${user.userID}] precense log updated to ${presence.status}.`))
+          .catch(err => {
+            Log.Error(`UpdateUserPresence: User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
+            Log.ErrorDump('UpdateUserPresence: User Presence Update Error', err, user, presence);
+          });
+      }
+
+      // Same as Entry, no new precense to log
+      else if (pEntry.endTime === null && pStatusID === status) {
+        Log.level(2).Print('No new precense to log. Same as before.');
+        return;
+      }
+
     })
-    .catch(err => {
-      Log.Error('Precense Log could not be created: ', err);
-      Log.ErrorDump('Precense Log could not be created:', err, user, presence);
+
+    // No Entry found
+    .catch(_ => {
+      // CREATE: new Entry
+      const uuid = v4.generate().split('-').pop();
+
+      presenceLocalStorage_instance.add(user.userID.toString(), {
+        precenseID: uuid,
+        userID: user.userID,
+        statusID: status,
+        startTime: new Date().toUTCString(),
+        endTime: null,
+      } as any)
+        .then(() => Log.level(1).Info(`User ${user.username}[${user.userID}] precense log updated to ${presence.status}.`))
+        .catch(err => {
+          Log.Error(`UpdateUserPresence: User Presence\'s Endtime could not be updated from ${presence.status}.`, err);
+          Log.ErrorDump('UpdateUserPresence: User Presence Update Error', err, user, presence);
+        });
     });
 }

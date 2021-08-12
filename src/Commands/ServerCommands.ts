@@ -2,7 +2,9 @@ import { DiscordenoMessage, getGuild } from 'https://deno.land/x/discordeno@12.0
 import { CommandMap, Command } from '../Interfaces/Command.ts';
 import { GuildActivityModel, GuildModel } from '../Database/index.ts';
 import { IGuildActivity, IGuild } from '../Interfaces/Database.ts';
-import { GUILD_CACHE } from '../Helpers/Cache.ts';
+import { 
+  guildLocalStorage_instance,
+} from '../Helpers/LocalStorage/index.ts';
 
 /**
  * Prints Command Interaction of users within the server
@@ -60,13 +62,10 @@ async function command_server_set_bot_channel(msg: DiscordenoMessage, cmd: Comma
       return msg.send(`Invalid command! Command usage: \`${cmd.cmd} [channel name]\``);
     }
     
-    await GuildModel
-      .where('guildID', guild.id.toString())
-      .update('responseChannel', cmd.directArg);
+    await guildLocalStorage_instance.update(guild.id.toString(), {
+      responseChannel: cmd.directArg,
+    });
     
-    // Make sure updated Guild is stale
-    GUILD_CACHE.expire(guild.id.toString(), -1);
-      
     return msg.send(`Preferred Response Channel updated to '${cmd.directArg}'`);
   } else {
     return msg.send('Only the owner of the server can set the Channel');
@@ -80,8 +79,8 @@ async function command_server_set_bot_channel(msg: DiscordenoMessage, cmd: Comma
  */
 async function command_server_show_bot_channel(msg: DiscordenoMessage, cmd: Command): Promise<any> {
   // Check if Guild is Cached or get from DB
-  let guild = GUILD_CACHE.get(msg.guildId.toString()) || (await GuildModel.find(msg.guildId.toString()) as any) as IGuild;
-
+  const guild = await guildLocalStorage_instance.get(msg.guildId.toString());
+  
   if (guild.responseChannel)
     return msg.send(`The set bot's reponse channel is '${guild.responseChannel}'`);
   else
@@ -99,13 +98,9 @@ async function command_server_clear_bot_channel(msg: DiscordenoMessage, cmd: Com
 
   // Owner Only!
   if (guild.ownerId.toString() === cmd.userId) {
-    await GuildModel
-      .where('guildID', guild.id.toString())
-      .update('responseChannel', null);
-
-    // Make sure updated Guild is stale
-    GUILD_CACHE.expire(guild.id.toString(), -1);
-
+    await guildLocalStorage_instance.update(guild.id.toString(), {
+      responseChannel: null,
+    });
     return msg.send('Preferred Response Channel has been cleared');
   } else {
     return msg.send('Only the owner of the server can set the Channel');
