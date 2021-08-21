@@ -6,7 +6,7 @@ import { IPrecenseLog, IUser, IBotTracker, ITimestamps } from '../Interfaces/Dat
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
 import { PrecenseLogModel, UserModel, BotTrackerModel } from '../Database/index.ts';
-import { ITimeDifference } from '../Helpers/utils.ts';
+import { ITimeDifference, stringFromStatusEnum } from '../Helpers/utils.ts';
 import { Cache } from '../Helpers/Cache.ts';
 import Logger from '../Logging/index.ts';
 
@@ -14,6 +14,7 @@ import Logger from '../Logging/index.ts';
 import { 
   botNotificationLocalStorage_instance,
   userLocalStorage_instance,
+  presenceLocalStorage_instance,
 } from '../Helpers/LocalStorage/index.ts';
 
 // LOCAL CACHE & LOGING
@@ -31,39 +32,27 @@ interface IWeeklyUptime {
 
 /**
  * Handles Uptime Command. Replies with last most recent
- *  uptime metric since LAST OFFLINE END
+ *  uptime metric since last presence
  * @param msg DiscordenoMessage Object
  * @param cmd Parsed Command Object
  */
-async function command_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
-  return UserModel.find(cmd.userId)
-    .then(async (user) => {
-      if (!user) {
-        return msg.reply('No metrics stored for user');
-      }
+async function command_uptime(msg: DiscordenoMessage, _: Command): Promise<any> {
+  // Check stored latest presence
+  return presenceLocalStorage_instance.get(msg.authorId.toString())
+    .then(presence => {
+      const startTime = new Date(presence.startTime);
 
-      // Latest Stored OFFLINE precense
-      const precenseLogs = (await PrecenseLogModel
-        .where('userID', user.userID as string)
-        .where('statusID', StatusType.offline.toString())
-        .orderBy('startTime', 'desc')
-        .limit(1)
-        .get()) as Model[];
-      
-      // Handle no Stored Data found
-      if (!precenseLogs.length) {
-        return msg.reply('No recent found metrics found');
-      }
+      // Construct Time difference string since in the current state
+      const dt_str = utils.getTimeDifferenceString(Date.now() - startTime.getTime());
 
-      // Construct Data
-      const recentOfflinePrecense: IPrecenseLog = precenseLogs[0] as any;
+      // Convert status type
+      const status_str = stringFromStatusEnum(presence.statusID);
+      const status_upper_str = status_str[0].toUpperCase() + status_str.substr(1);
 
-      // Construct Time difference string since OFFLINE
-      const dt_str = utils.getTimeDifferenceString(Date.now() - recentOfflinePrecense.endTime.getTime());
-
-      return msg.reply(`You've been online for ${dt_str.str}. 
-        **Online Timestamp**: ${recentOfflinePrecense.startTime.toUTCString()}`);
-    });
+      return msg.reply(`You've been ${status_str} for ${dt_str.str}. 
+        **${status_upper_str} Timestamp**: ${startTime.toUTCString()}`);
+    })
+    .catch(() => msg.reply('No metrics stored for user'));
 }
 
 /**
