@@ -70,6 +70,7 @@ All commands should be prefixed with `!`.
 - `list-bot-tracking`: DMs a list for all Bots being tracked to user
 - `clear-data`: Clears all stored logs of user. (*No Confirmation is given*)
 - `uptime`: Prints User's most recent uptime
+- `graph-uptime`: Generates and outputs user's uptime as a graph
 - `week-uptime`: Prints User's uptime during the past 7 days
 
 **Server-Specific Commands**

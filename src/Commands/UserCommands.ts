@@ -2,6 +2,7 @@ import { v4 } from 'https://deno.land/std@0.101.0/uuid/mod.ts';
 import { DiscordenoMessage, sendDirectMessage, getUser } from 'https://deno.land/x/discordeno@12.0.1/mod.ts';
 import { Model } from 'https://deno.land/x/denodb@v1.0.38/lib/model.ts';
 import { CommandMap, Command } from '../Interfaces/Command.ts';
+import Graph from 'https://deno.land/x/deno_chart@1.1.0/mod.ts';
 import { IPrecenseLog, IUser, IBotTracker, ITimestamps } from '../Interfaces/Database.ts';
 import * as utils from '../Helpers/utils.ts';
 import { StatusType } from '../Interfaces/Database.ts';
@@ -21,6 +22,21 @@ import {
 const Log = Logger.getInstance();
 const UPTIME_CACHE = new Cache<IWeeklyUptime>(10);
 const UPTIME_CACHE_TTL = 1 * 60 * 1000;    // 1  Minute
+
+// GRAPH CACHE & OPTIONS
+interface IGraphBlobCache {
+  timestamp:  number,
+  sortedKeys: string[],
+  blob:       Blob,
+}
+const GRAPH_BLOB_CACHE = new Cache<IGraphBlobCache>(100);
+const GRAPH_BLOB_CACHE_TTL = 1 * 60 * 60 * 1000; // 1 Hour
+const GRAPH_COLORS = [
+  '#F25260', '#69BFBF', '#F2E6D0',
+  '#F25252', '#F0CA4D', '#E37B40',
+  '#E74C3C', '#ECF0F1', '#3498DB',
+  '#2980B9', '#46B39D', '#DE5B49'
+];
 
 
 interface IWeeklyUptime {
@@ -53,6 +69,109 @@ async function command_uptime(msg: DiscordenoMessage, _: Command): Promise<any> 
         **${status_upper_str} Timestamp**: ${startTime.toUTCString()}`);
     })
     .catch(() => msg.reply('No metrics stored for user'));
+}
+
+/**
+ * Handles Graphing the weekly uptime of the user. Replies with last most recent
+ *  weekly uptime metric stored. Caches the result for lower processing time
+ * @param msg DiscordenoMessage Object
+ * @param cmd Parsed Command Object
+ */
+async function command_graph_uptime(msg: DiscordenoMessage, cmd: Command): Promise<any> {
+  const graph = new Graph({
+    height: 720,
+    width: 1280,
+    
+    backgroundColor: {
+      r: 30,
+      g: 30,
+      b: 30,
+      a: 1.0,
+    },
+    
+    titleText: 'Uptime',
+    xAxisText: 'Day',
+    yAxisText: 'Hours',
+    bar_width:  88,
+
+    xTextColor:     'rgba(255,255,255,1)',
+    xSegmentColor:  'rgba(255,255,255,0.5)',
+    yTextColor:     'rgba(255,255,255,1)',
+    ySegmentColor:  'rgba(255,255,255,0.5)',
+  });
+
+  // Resolve Message helper function
+  const resolveMsg = (entry: IGraphBlobCache) => {
+    const { blob, sortedKeys, timestamp } = entry;
+    return msg.send({
+      embeds: [{
+        title: 'Graphed Weekly Uptime',
+        description: `Uptime Graph generated for time period between ${sortedKeys[0]} and ${sortedKeys[sortedKeys.length - 1]}`,
+        footer: {
+          text: timestamp.toString(),
+        },
+      }],
+      file: {
+        blob,
+        name: `${cmd.userId}-graph-uptime.png`,
+      },
+    });
+  }
+
+  return UserModel.find(cmd.userId)
+    .then(async (user) => {
+      if (!user) {
+        return msg.reply('No metrics stored for user');
+      }
+
+      // Check Cached Image
+      const cached_blob = GRAPH_BLOB_CACHE.get(cmd.userId);
+      if (cached_blob) {
+        return resolveMsg(cached_blob);
+      }
+      
+      // Latest Stored OFFLINE precense
+      const startDate = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)); // Past 7 Days
+      const precenseLogs = (await PrecenseLogModel
+        .where('userID', user.userID as string)
+        .where('startTime', '>=', startDate.toUTCString())
+        .orderBy('created_at', 'asc')
+        .get()) as Model[];
+
+      // Handle no Stored Data found
+      if (!precenseLogs.length) {
+        return msg.reply('No recent found metrics found');
+      }
+      
+      const weeklyEntries: { [dateStr: string]: number } = {};
+      for (const entry of (precenseLogs as any as IPrecenseLog[])) {
+        const endTime = entry.endTime ? entry.endTime : new Date();
+        const key = entry.startTime.toDateString();
+        weeklyEntries[key] = (weeklyEntries[key] || 0) + ((endTime.getTime() - entry.startTime.getTime()) / (1000 * 60 * 60));
+      }
+      
+      let i = 0;
+      const sortedKeys = Object.keys(weeklyEntries).sort((a, b) => (new Date(a)).getTime() - (new Date(b).getTime()));
+      for (const key of sortedKeys) {
+        graph.add({
+          color: GRAPH_COLORS[Math.floor(Math.random() * GRAPH_COLORS.length)],
+          val: weeklyEntries[key],
+          label: (key).toString(),
+        });
+      }
+
+      graph.draw();
+
+      // Cache Result
+      const _graphResult = {
+        blob: new Blob([graph.toBuffer()], { type: 'image/png' }),
+        sortedKeys,
+        timestamp: Date.now(),
+      };
+      GRAPH_BLOB_CACHE.set(cmd.userId, _graphResult, GRAPH_BLOB_CACHE_TTL);
+
+      return resolveMsg(_graphResult);
+    });
 }
 
 /**
@@ -298,6 +417,10 @@ export const USER_COMMANDS: CommandMap = {
   'uptime': {
     exec: command_uptime,
     description: 'Prints User\'s most recent uptime',
+  },
+  'graph-uptime': {
+    exec: command_graph_uptime,
+    description: 'Generates and outputs user\'s uptime as a graph',
   },
   'week-uptime': {
     exec: command_weekUptime,
