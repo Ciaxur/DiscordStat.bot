@@ -1,5 +1,5 @@
 {
-  "version": "1.8.2",
+  "version": "1.8.3",
   "logging": {
     "level": 1,
     "logDir": "logs"

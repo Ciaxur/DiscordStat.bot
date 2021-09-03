@@ -143,11 +143,27 @@ async function command_graph_uptime(msg: DiscordenoMessage, cmd: Command): Promi
         return msg.reply('No recent found metrics found');
       }
       
+      // Calculate hours throughout the week, keeping track of "overflows"
+      let leftoverHours = 0;
       const weeklyEntries: { [dateStr: string]: number } = {};
+      
       for (const entry of (precenseLogs as any as IPrecenseLog[])) {
         const endTime = entry.endTime ? entry.endTime : new Date();
         const key = entry.startTime.toDateString();
-        weeklyEntries[key] = (weeklyEntries[key] || 0) + ((endTime.getTime() - entry.startTime.getTime()) / (1000 * 60 * 60));
+        let totalHours = (weeklyEntries[key] || 0) + ((endTime.getTime() - entry.startTime.getTime()) / (1000 * 60 * 60));
+
+        // Constrain to 24 hours
+        if (totalHours > 24) {
+          leftoverHours += totalHours - 24;
+          totalHours = 24;
+          weeklyEntries[key] = totalHours;
+        } 
+        
+        // Add on the leftover hours and reset
+        else {
+          weeklyEntries[key] = totalHours + leftoverHours;
+          leftoverHours = 0;
+        }
       }
       
       let i = 0;
