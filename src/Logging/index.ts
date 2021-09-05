@@ -200,33 +200,33 @@ export default class Logger implements LogInterface {
    * @param str Main string to log
    * @param vars Variadic Variable
    */
-   public ErrorDump(str: string, ...vars: any[]): void {
-     // Construct timestamp and logpath
-     const now = Date.now();
-     const log_path = Path.join(this._log_dir_path, `${now}_error_dump.log`);
+  public ErrorDump(str: string, ...vars: any[]): void {
+    // Construct timestamp and logpath
+    const now = Date.now();
+    const log_path = Path.join(this._log_dir_path, `${now}_error_dump.log`);
 
-     // Create Directory if not found
-     try {
-       console.log('Creating Dir', this._log_dir_path);
-       Deno.mkdirSync(this._log_dir_path);
-     } catch(e) {
-       console.log('Directory already exists');
-     }
+    // Create Directory if not found
+    try {
+      console.log('Creating Dir', this._log_dir_path);
+      Deno.mkdirSync(this._log_dir_path);
+    } catch (e) {
+      console.log('Directory already exists');
+    }
 
-     Deno.writeTextFileSync(
-       log_path,
-       str +
-       vars.reduce((acc, elt) => (
-         acc + '\n' +
-         (elt instanceof Object
-           ? elt instanceof Error
-             ? 'Error Stack: ' + elt.stack
-             : JSON.stringify(elt, null, 2)
-           : elt.toString()
-         )
-       ), ''),
-     );
-   }
+    Deno.writeTextFileSync(
+      log_path,
+      str +
+      vars.reduce((acc, elt) => (
+        acc + '\n' +
+        (elt instanceof Object
+          ? elt instanceof Error
+            ? 'Error Stack: ' + elt.stack
+            : JSON.stringify(elt, null, 2)
+          : elt.toString()
+        )
+      ), ''),
+    );
+  }
 
   // Getters & Setters
   public get logLevel() {
