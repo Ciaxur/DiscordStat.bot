@@ -41,7 +41,7 @@ export default class PresenceLocalStorage extends LocalStorage<IPrecenseLog> {
       `)
         .then(res => Log.Debug('Null EndTime Presence Logs removed from DB'))
         .catch(err => Log.Error('Null EndTime Presence Logs FAILED to be removed from DB:', err));
-    });
+    }, { storage_name: 'presence' });
 
     // Setup Callbacks on Bulk Query
     this._db_queue.onSuccess = (entries: IPrecenseLog[]) => (

@@ -16,10 +16,16 @@ interface QueryQueue<T> {
 // E = Entry | T = Data(Stored)
 type StorageSetFunction<E, D> = (data: E, internalMap: Map<string, D>) => void;
 
+interface LocalStorageOptions {
+  timeout:        number,
+  storage_name:   string,
+}
+
 export abstract class LocalStorage<E, T=E> {
   private _data: Map<string, T>;
   private _ready: boolean = false;
   private _timeout: number;
+  protected _storage_name: string = "local";
 
   // Internal Storage Functions
   private _store_fn: StorageSetFunction<E, T>; // The metohd in which to store data
@@ -35,10 +41,11 @@ export abstract class LocalStorage<E, T=E> {
    * @param timeout (Optional, Default = 5000) Milliseconds to timeout trying to load data from initFunc
    *  - Timeout of -1 will infinitly retry every 1.5s
    */
-  constructor(store_fn: StorageSetFunction<E, T>, initFunc?: () => Promise<E[]>, initFuncCallback?: () => void, timeout = 5000) {
+  constructor(store_fn: StorageSetFunction<E, T>, initFunc?: () => Promise<E[]>, initFuncCallback?: () => void, options?: Partial<LocalStorageOptions>) {
     this._store_fn = store_fn;
     this._data = new Map();
-    this._timeout = timeout;
+    this._timeout = options?.timeout || 5000;
+    this._storage_name = options?.storage_name || this._storage_name;
     this._db_queue = {
       data: [],
       model: null,
@@ -51,7 +58,7 @@ export abstract class LocalStorage<E, T=E> {
       const _fn = async () => {
         try {
           const entries = await initFunc();
-          Log.Debug('LocalStorage Entries Loaded: ', entries.length);
+          Log.Debug(`LocalStorage<${this._storage_name}> Entries Loaded: `, entries.length);
           for (const elt of entries)
             this._store_fn(elt, this._data);
           
@@ -60,11 +67,11 @@ export abstract class LocalStorage<E, T=E> {
           // Optional Callback
           if (initFuncCallback) initFuncCallback();
         } catch(err) {
-          Log.Warning('LocalStorage Init Function Error: ', err);
+          Log.Warning(`LocalStorage<${this._storage_name}> Init Function Error: `, err);
           // Repeat until success or timed out
           this._timeout -= 1500;
           if (this._timeout > 0) {
-            Log.level(1).Warning('LocalStorage: Retrying with timeout: ', this._timeout);
+            Log.level(1).Warning(`LocalStorage<${this._storage_name}>: Retrying with timeout: `, this._timeout);
             setTimeout(_fn, 1500);
           }
         }
@@ -123,7 +130,7 @@ export abstract class LocalStorage<E, T=E> {
   public async _close() {
     if(this._db_queue_timeout_id)
       clearTimeout(this._db_queue_timeout_id);
-    Log.level(1).Info('Flushing LocalStorage Queued Queries...');
+    Log.level(1).Info(`Flushing LocalStorage<${this._storage_name}> Queued Queries...`);
     return this._event_create_query_db();
   }
 
@@ -148,7 +155,7 @@ export abstract class LocalStorage<E, T=E> {
 
     // Early return
     if (_guild_entry) {
-      Log.level(2).Debug(`LocalStorage: ${storageName} '${key}' Get found`);
+      Log.level(2).Debug(`LocalStorage<${this._storage_name}>: ${storageName} '${key}' Get found`);
       return Promise.resolve(_guild_entry);
     }
 
@@ -156,14 +163,14 @@ export abstract class LocalStorage<E, T=E> {
     try {
       const _data_db_entry = await model.find(key);
       if (_data_db_entry) {
-        Log.level(2).Debug(`LocalStorage: ${storageName} '${key}' Get found in Database`);
+        Log.level(2).Debug(`LocalStorage<${this._storage_name}>: ${storageName} '${key}' Get found in Database`);
         this.data.set(key, _data_db_entry as any);
         return Promise.resolve(_data_db_entry as any);
       }
     } catch(err) {
-      Log.Error(`${storageName} LocalStorage DB.Find<${_storage_name_lower}>(${key}) type(${typeof(key)}) Error: `, err);
-      Log.ErrorDump(`${storageName} LocalStorage DB.Find<${_storage_name_lower}>(${key}) Error: `, err);
-      return Promise.reject(`${storageName} LocalStorage DB.Find<${_storage_name_lower}>(${key}) Error: ${err}`);
+      Log.Error(`${storageName} LocalStorage<${this._storage_name}> DB.Find<${_storage_name_lower}>(${key}) type(${typeof(key)}) Error: `, err);
+      Log.ErrorDump(`${storageName} LocalStorage<${this._storage_name}> DB.Find<${_storage_name_lower}>(${key}) Error: `, err);
+      return Promise.reject(`${storageName} LocalStorage<${this._storage_name}> DB.Find<${_storage_name_lower}>(${key}) Error: ${err}`);
     }
 
     return Promise.resolve(null);
@@ -208,7 +215,7 @@ export abstract class LocalStorage<E, T=E> {
         .then(() => {
           if (this._db_queue.onSuccess) this._db_queue.onSuccess(_entries)
           else {
-            Log.level(2).Internal('LocalStorage', `Query Create Event: Created ${_entries.length} entries`);
+          Log.level(2).Internal(`LocalStorage<${this._storage_name}>`, `Query Create Event: Created ${_entries.length} entries`);
           }
         })
         .catch((err: Error) => {
@@ -221,16 +228,16 @@ export abstract class LocalStorage<E, T=E> {
           // Call Error Callback
           if (this._db_queue.onError) this._db_queue.onError(err);
           else {
-            Log.Error('LocalStorage: Query Create Event Error: ', err);
-            Log.ErrorDump('LocalStorage: Query Create Event Error', err, _entries);
+          Log.Error(`LocalStorage<${this._storage_name}>: Query Create Event Error: `, err);
+          Log.ErrorDump(`LocalStorage<${this._storage_name}>: Query Create Event Error`, err, _entries);
           }
   
           // Reset timeout
-          Log.level(2).Debug('LocalStorage Create Query Event: Reset timeout');
+        Log.level(2).Debug(`LocalStorage<${this._storage_name}> Create Query Event: Reset timeout`);
           this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
         });
     } else {
-      Log.level(1).Warning('LocalStorage: No Database Model Available');
+      Log.level(1).Warning(`LocalStorage<${this._storage_name}>: No Database Model Available`);
     }
 
     return Promise.resolve();

@@ -12,7 +12,7 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
     super((user, map) => map.set(user.userID, user), async () => {
       Log.Debug('Querying Users...');
       return UserModel.get() as any;
-    });
+    }, undefined, { storage_name: 'users' });
 
     // Setup Callbacks on Bulk Query
     this._db_queue.onSuccess = (entries: IUser[]) => (
@@ -36,7 +36,7 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
     // Not in Database or Local, query Discord
     const _user_from_discord = await getUser(BigInt(key));
     if (_user_from_discord) {
-      Log.level(4).Debug(`LocalStorage: User '${key}' Get queried from Discord`);
+      Log.level(4).Debug(`LocalStorage<${super._storage_name}>: User '${key}' Get queried from Discord`);
 
       const userEntry: IUser = {
         userID: _user_from_discord.id.toString(),
@@ -65,7 +65,7 @@ export default class UserLocalStorage extends LocalStorage<IUser> {
 
       // Queue up Create Entries to DB
       this._add_entry_to_db(val, UserModel);
-      Log.level(1).Info(`LocalStorage: User '${val.username}[${key}] add queued to Database`)
+      Log.level(1).Info(`LocalStorage<${super._storage_name}>: User '${val.username}[${key}] add queued to Database`)
     }
     return Promise.resolve();
   }

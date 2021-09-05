@@ -13,7 +13,7 @@ export default class GuildLocalStorage extends LocalStorage<IGuild> {
     super((guild, map) => map.set(guild.guildID, guild), async () => {
       Log.Debug('Querying Guilds...');
       return GuildModel.get() as any;
-    });
+    }, undefined, { storage_name: 'guild' });
   }
 
 
@@ -32,7 +32,7 @@ export default class GuildLocalStorage extends LocalStorage<IGuild> {
     // Not in Database or Local, query Discord
     const _guild_from_discord = await getGuild(BigInt(key));
     if (_guild_from_discord) {
-      Log.level(2).Debug(`LocalStorage: Guild '${key}' Get queried from Discord`);
+      Log.level(2).Debug(`LocalStorage<${super._storage_name}>: Guild '${key}' Get queried from Discord`);
 
       const guildEntry: IGuild = {
         guildID: _guild_from_discord.id.toString(),

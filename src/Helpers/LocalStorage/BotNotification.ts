@@ -15,7 +15,7 @@ export default class BotNotification extends LocalStorage<IBotTracker, IBotTrack
     }, async () => {
       Log.Debug('Querying Bot Trackers...');
       return BotTrackerModel.get() as any;
-    });
+    }, undefined, { storage_name: 'bot-notification' });
   }
 
 
@@ -47,9 +47,9 @@ export default class BotNotification extends LocalStorage<IBotTracker, IBotTrack
     // No found entries, create entry in DB
     if (_entries.length === 0) {
       BotTrackerModel.create(val as any)
-        .then(() => Log.level(1).Internal('LocalStorage', `New Bot Tracker '${val.userId}[${key}] tracking -> bot[${val.botId}]`))
+        .then(() => Log.level(1).Internal(`LocalStorage<${super._storage_name}>`, `New Bot Tracker '${val.userId}[${key}] tracking -> bot[${val.botId}]`))
         .catch(err => {
-          Log.level(1).Warning(`LocalStorage Error: Bot Tracker '${key}' not created: `, err);
+          Log.level(1).Warning(`LocalStorage<${super._storage_name}> Error: Bot Tracker '${key}' not created: `, err);
         });
     }
 
@@ -74,7 +74,7 @@ export default class BotNotification extends LocalStorage<IBotTracker, IBotTrack
     BotTrackerModel.deleteById(entry.trackId);
     this.data.set(entry.botId, _filtered_entry);
 
-    Log.level(1).Internal('LocalStorage', `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
+    Log.level(1).Internal(`LocalStorage<${super._storage_name}>`, `Removed Bot Tracking Entry '${entry.trackId}': [bot:${entry.botId}] [user:${entry.userId}]`);
     return Promise.resolve();
   }
 };
