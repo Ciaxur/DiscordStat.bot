@@ -198,6 +198,63 @@ export abstract class LocalStorage<E, T=E> {
 
   // EVENTS
   /**
+   * Attempts to build create query for given entries. Splits up the query if
+   *  it fails, pinpointing the issue
+   * @param _entries Entries to build query
+   */
+  private async _event_create_query_db_helper(_entries: T[]): Promise<any> {
+    Log.level(1).Debug(`LocalStorage<${this._storage_name}>: Bulk Create ${_entries.length} entries`);
+
+    return this._db_queue.model
+      .create(_entries)
+      .then(() => {
+        if (this._db_queue.onSuccess) this._db_queue.onSuccess(_entries)
+        else {
+          Log.level(2).Internal(`LocalStorage<${this._storage_name}>`, `Query Create Event: Created ${_entries.length} entries`);
+        }
+      })
+      .catch((err: Error) => {
+        // Handle ForeignKey Violation Error
+        const isViolatesForeignKey = err.message.search('violates foreign key constraint') !== -1;
+        if (isViolatesForeignKey) {
+          // Try splitting up the query
+          if (_entries.length > 1) {
+            const half1 = _entries.slice(0, _entries.length / 2);
+            const half2 = _entries.splice(_entries.length / 2, _entries.length);
+            return Promise.all([
+              this._event_create_query_db_helper(half1),
+              this._event_create_query_db_helper(half2),
+            ]);
+          }
+
+          // Drop the violation entry since it was already entered
+          else {
+            Log.Error(`LocalStorage<${this._storage_name}>: Dropping ForeignKey Violation Entry: `, _entries);
+            Log.ErrorDump(`LocalStorage<${this._storage_name}>: Dropping ForeignKey Violation Entry`, err, _entries);
+            return;
+          }
+        }
+        
+        // Revert _entries back into queue
+        this._db_queue.data = [
+          ...this._db_queue.data,
+          ..._entries,
+        ];
+
+        // Call Error Callback
+        if (this._db_queue.onError) this._db_queue.onError(err);
+        else {
+          Log.Error(`LocalStorage<${this._storage_name}>: Query Create Event Error: `, err);
+          Log.ErrorDump(`LocalStorage<${this._storage_name}>: Query Create Event Error`, err, _entries);
+        }
+
+        // Reset timeout
+        Log.level(2).Debug(`LocalStorage<${this._storage_name}> Create Query Event: Reset timeout`);
+        this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
+      });
+  }
+  
+  /**
    * Model DB Create event: Bulk Create to supplied model
    */
   private async _event_create_query_db(): Promise<any> {
@@ -209,33 +266,7 @@ export abstract class LocalStorage<E, T=E> {
     this._db_queue.data = [];
 
     if (this._db_queue.model) {
-      Log.level(1).Debug(`LocalStorage: Bulk Create ${_entries.length} entries`);
-      return this._db_queue.model
-        .create(_entries)
-        .then(() => {
-          if (this._db_queue.onSuccess) this._db_queue.onSuccess(_entries)
-          else {
-          Log.level(2).Internal(`LocalStorage<${this._storage_name}>`, `Query Create Event: Created ${_entries.length} entries`);
-          }
-        })
-        .catch((err: Error) => {
-          // Revert _entries back into queue
-          this._db_queue.data = [
-            ...this._db_queue.data,
-            ..._entries,
-          ];
-  
-          // Call Error Callback
-          if (this._db_queue.onError) this._db_queue.onError(err);
-          else {
-          Log.Error(`LocalStorage<${this._storage_name}>: Query Create Event Error: `, err);
-          Log.ErrorDump(`LocalStorage<${this._storage_name}>: Query Create Event Error`, err, _entries);
-          }
-  
-          // Reset timeout
-        Log.level(2).Debug(`LocalStorage<${this._storage_name}> Create Query Event: Reset timeout`);
-          this._db_queue_timeout_id = setTimeout(this._event_create_query_db.bind(this), QUERY_TIMEOUT);
-        });
+      return await this._event_create_query_db_helper(_entries);
     } else {
       Log.level(1).Warning(`LocalStorage<${this._storage_name}>: No Database Model Available`);
     }
