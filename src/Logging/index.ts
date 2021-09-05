@@ -213,9 +213,18 @@ export default class Logger implements LogInterface {
        console.log('Directory already exists');
      }
 
-     Deno.writeTextFileSync(log_path, str + vars.reduce((acc, elt) => (
-       acc + ' ' + (elt instanceof Object ? JSON.stringify(elt, null, 2) : elt.toString())
-     ), ''));
+     Deno.writeTextFileSync(
+       log_path,
+       vars.reduce((acc, elt) => (
+         acc + '\n' +
+         (elt instanceof Object
+           ? elt instanceof Error
+             ? 'Error Stack: ' + elt.stack
+             : JSON.stringify(elt, null, 2)
+           : elt.toString()
+         )
+       ), ''),
+     );
    }
 
   // Getters & Setters

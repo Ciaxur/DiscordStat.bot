@@ -148,7 +148,7 @@ startBot({
           updateUserPresence(user, presence)
             .catch(err => {
               Log.Error(`PresenceUpdate: User[${presence.user.id}, ${presence.user.username}] Error: `, err);
-              Log.ErrorDump('PrecenseUpdate:', err, presence);
+              Log.ErrorDump('PrecenseUpdate:', err, presence, user);
             });
         }
 
