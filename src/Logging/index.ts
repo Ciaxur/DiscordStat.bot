@@ -215,6 +215,7 @@ export default class Logger implements LogInterface {
 
      Deno.writeTextFileSync(
        log_path,
+       str +
        vars.reduce((acc, elt) => (
          acc + '\n' +
          (elt instanceof Object
