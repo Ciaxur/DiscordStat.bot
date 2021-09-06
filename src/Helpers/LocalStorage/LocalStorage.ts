@@ -229,7 +229,7 @@ export abstract class LocalStorage<E, T=E> {
 
           // Drop the violation entry since it was already entered
           else {
-            Log.Error(`LocalStorage<${this._storage_name}>: Dropping ForeignKey Violation Entry: `, _entries);
+            Log.Error(`LocalStorage<${this._storage_name}>: Dropping ForeignKey Violation Entry: `, JSON.stringify(_entries, null, '\t'));
             Log.ErrorDump(`LocalStorage<${this._storage_name}>: Dropping ForeignKey Violation Entry`, err, _entries);
             return;
           }
